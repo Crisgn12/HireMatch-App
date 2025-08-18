@@ -1,12 +1,19 @@
 import React from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, Text, TextInput, View } from 'react-native';
 
 const Login = () => {
 
   return (
-    <View className='flex-1 justify-center items-center flex-col'>
+    <View className='mt-24 justify-center items-center flex-col'>
       <View className='justify-center items-center gap-3 mb-12'>
-        <Text className='text-3xl text-primary font-bold'>
+        <Image
+          source={require('../../assets/images/HireMatch-Logo.png')}
+          className='size-40'
+        />
+
+        <Text
+          style={{ fontFamily: 'PoppinsRegular' }} 
+          className='text-3xl text-primary font-bold'>
           Inicio de Sesión
         </Text>
 

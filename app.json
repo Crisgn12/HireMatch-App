@@ -3,6 +3,11 @@
     "name": "HireMatch",
     "slug": "HireMatch",
     "version": "1.0.0",
+    "extra": {
+      "expoGoogleFonts": {
+        "Poppins": true
+      }
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "hirematch",
@@ -33,7 +38,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
