@@ -1,8 +1,9 @@
 import React from 'react';
+import { useRouter } from 'expo-router';
 import { Image, Pressable, Text, TextInput, View } from 'react-native';
 
 const Login = () => {
-
+const router = useRouter();
   return (
     <View className='mt-24 justify-center items-center flex-col'>
       <View className='justify-center items-center gap-3 mb-12'>
@@ -47,7 +48,7 @@ const Login = () => {
           <View className='border border-gray-300 w-[40%]'></View>
         </View>
 
-        <Pressable className='border border-primary rounded-xl'>
+        <Pressable className='border border-primary rounded-xl' onPress={() => router.push('../auth/register')}>
           <Text className='text-center text-primary p-3 rounded-xl font-semibold'>
             Regístrate
           </Text>
