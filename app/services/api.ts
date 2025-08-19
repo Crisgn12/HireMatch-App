@@ -1,6 +1,7 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'http://localhost:8080'; // Replace with your actual API base URL, e.g., 'http://localhost:8080'
+const API_BASE_URL = 'http://192.168.100.100:8080'; // Replace with your actual API base URL, e.g., 'http://localhost:8080'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -13,14 +14,15 @@ const api = axios.create({
 // Add request interceptor for future JWT handling (not needed for register)
 api.interceptors.request.use(
   (config) => {
-    // If token is available (e.g., after login), add it here
-    // const token = getTokenFromStorage(); // Placeholder
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    const token = AsyncStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 // Add response interceptor for error handling
@@ -64,6 +66,15 @@ export const registerUser = async (data: { nombre: string; apellido: string; ema
 export const verifyCode = async (data: { email: string; code: string }) => {
   try {
     const response = await api.post('/auth/verify', data); // Assume endpoint /auth/verify
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const loginUser = async (data: { email: string; password: string }) => {
+  try {
+    const response = await api.post('/auth/login', data);
     return response.data;
   } catch (error) {
     throw error;
