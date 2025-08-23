@@ -1,7 +1,7 @@
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
-const API_BASE_URL = 'http://192.168.100.100:8080'; // Replace with your actual API base URL, e.g., 'http://localhost:8080'
+const API_BASE_URL = 'http://192.168.0.12:8080'; // Replace with your actual API base URL, e.g., 'http://localhost:8080'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -79,6 +79,39 @@ export const loginUser = async (data: { email: string; password: string }) => {
   } catch (error) {
     throw error;
   }
+};
+
+export const getUserProfile = async () => {
+  const response = await api.get('/api/perfiles/me'); // Assume endpoint to get current user profile
+  return response.data;
+};
+
+export const createProfile = async (data: {
+  tipo_perfil: 'postulante' | 'empresa';
+  descripcion?: string;
+  ubicacion?: string;
+  telefono?: string;
+  sitio_web?: string;
+  experiencia?: string;
+  educacion?: string;
+  certificaciones?: string;
+  intereses?: string;
+}) => {
+  const response = await api.post('/api/perfiles', data);
+  return response.data;
+};
+
+export const uploadProfilePhoto = async (perfil_id: number, photo: FormData) => {
+  const response = await api.post(`/api/perfiles/${perfil_id}/foto`, photo, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const updateUserActivo = async () => {
+  await api.patch('/api/usuarios/activo'); // Assume endpoint to update 'activo' field
 };
 
 // Export the api instance if needed for other calls

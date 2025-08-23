@@ -18,6 +18,9 @@ export default function Index() {
       <Pressable onPress={() => router.push('../auth/register')}>
         <Text className='text-blue-500'>Go to Register</Text>
       </Pressable>
+      <Pressable onPress={() => router.push('../auth/ProfileCompletion')}>
+        <Text className='text-blue-500'>Go to Profile Completion</Text>
+      </Pressable>
     
     </View>
   );
