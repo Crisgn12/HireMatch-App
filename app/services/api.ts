@@ -81,8 +81,25 @@ export const loginUser = async (data: { email: string; password: string }) => {
   }
 };
 
+/*User Profile API*/ 
+
 export const getUserProfile = async () => {
-  const response = await api.get('/api/perfiles/me'); // Assume endpoint to get current user profile
+  const response = await api.get('/api/profile/me'); // Assume endpoint to get current user profile
+  return response.data;
+};
+
+export const updateProfile = async (data: {
+  descripcion?: string;
+  ubicacion?: string;
+  telefono?: string;
+  sitio_web?: string;
+  experiencia?: string;
+  habilidades?: string;
+  educacion?: string;
+  certificaciones?: string;
+  intereses?: string;
+}) => {
+  const response = await api.put('/api/perfiles/me', data);
   return response.data;
 };
 
@@ -97,12 +114,12 @@ export const createProfile = async (data: {
   certificaciones?: string;
   intereses?: string;
 }) => {
-  const response = await api.post('/api/perfiles', data);
+  const response = await api.post('/api/profile', data);
   return response.data;
 };
 
 export const uploadProfilePhoto = async (perfil_id: number, photo: FormData) => {
-  const response = await api.post(`/api/perfiles/${perfil_id}/foto`, photo, {
+  const response = await api.post(`/api/profile/${perfil_id}/foto`, photo, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
