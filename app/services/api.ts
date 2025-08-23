@@ -1,91 +1,83 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://192.168.0.12:8080'; // Replace with your actual API base URL, e.g., 'http://localhost:8080'
+const API_BASE_URL = 'http://192.168.0.12:8080';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 seconds timeout for requests
+  timeout: 10000,
 });
 
-// Add request interceptor for future JWT handling (not needed for register)
+// Request interceptor for JWT token
 api.interceptors.request.use(
-  (config) => {
-    const token = AsyncStorage.getItem('token');
+  async (config) => {
+    const token = await AsyncStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Add response interceptor for error handling
+// Response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle common errors globally
     if (error.response) {
-      // Server responded with a status other than 200 range
       const { status, data } = error.response;
+      console.error('API Error:', status, data); // Log for debugging
       if (status === 400) {
-        // Validation error, e.g., duplicate email
         return Promise.reject(new Error(data.message || 'Error de validación'));
       } else if (status === 401) {
-        // Unauthorized, redirect to login if needed
         return Promise.reject(new Error('No autorizado'));
       } else if (status === 500) {
         return Promise.reject(new Error('Error en el servidor'));
       }
     } else if (error.request) {
-      // No response received
       return Promise.reject(new Error('No se recibió respuesta del servidor'));
     } else {
-      // Something happened in setting up the request
       return Promise.reject(new Error('Error de conexión'));
     }
-    return Promise.reject(error);
   }
 );
 
+// Client-side validation helpers
+const isValidPhone = (phone: string) => /^[+\d\s\-()]+$/.test(phone) && phone.replace(/[^\d]/g, '').length >= 7;
+const isValidUrl = (url: string) => /^(https?:\/\/)?(www\.)?[a-zA-Z0-9\-\.]+.[a-zA-Z]{2,}(\/.*)?$/.test(url);
+
 export const registerUser = async (data: { nombre: string; apellido: string; email: string; password: string }) => {
-  try {
-    const response = await api.post('/auth/register', data);
-    return response.data;
-  } catch (error) {
-    throw error; // Let the caller handle the error
-  }
+  const response = await api.post('/auth/register', data);
+  return response.data;
 };
 
-// Placeholder for verify endpoint (add when backend is ready)
 export const verifyCode = async (data: { email: string; code: string }) => {
-  try {
-    const response = await api.post('/auth/verify', data); // Assume endpoint /auth/verify
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.post('/auth/verify-email', {
+    email: data.email,
+    codigo: data.code,
+  });
+  return response.data;
+};
+
+export const resendCode = async (data: { email: string }) => {
+  const response = await api.post('/auth/resend-code', data);
+  return response.data;
 };
 
 export const loginUser = async (data: { email: string; password: string }) => {
-  try {
-    const response = await api.post('/auth/login', data);
-    return response.data;
-  } catch (error) {
-    throw error;
+  const response = await api.post('/auth/login', data);
+  if (response.data.token) {
+    await AsyncStorage.setItem('token', response.data.token);
   }
+  return response.data;
 };
 
-/*User Profile API*/ 
-
 export const getUserProfile = async () => {
-  const response = await api.get('/api/profile/me'); // Assume endpoint to get current user profile
-  return response.data;
+  const response = await api.get('/api/profile/me');
+  return response.data; // Returns ProfileResponse with fotoUrl
 };
 
 export const updateProfile = async (data: {
@@ -99,7 +91,14 @@ export const updateProfile = async (data: {
   certificaciones?: string;
   intereses?: string;
 }) => {
-  const response = await api.put('/api/perfiles/me', data);
+  // Validate optional fields
+  if (data.telefono && !isValidPhone(data.telefono)) {
+    throw new Error('El formato del teléfono no es válido');
+  }
+  if (data.sitio_web && !isValidUrl(data.sitio_web)) {
+    throw new Error('El formato de la URL no es válido');
+  }
+  const response = await api.put('/profile/me', data);
   return response.data;
 };
 
@@ -107,6 +106,7 @@ export const createProfile = async (data: {
   tipo_perfil: 'postulante' | 'empresa';
   descripcion?: string;
   ubicacion?: string;
+  habilidades?: string;
   telefono?: string;
   sitio_web?: string;
   experiencia?: string;
@@ -114,7 +114,51 @@ export const createProfile = async (data: {
   certificaciones?: string;
   intereses?: string;
 }) => {
-  const response = await api.post('/api/profile', data);
+  // Validate required field
+  if (!['postulante', 'empresa'].includes(data.tipo_perfil)) {
+    throw new Error('Tipo de perfil debe ser "postulante" o "empresa"');
+  }
+  // Validate optional fields
+  if (data.descripcion && data.descripcion.length > 1000) {
+    throw new Error('La descripción no puede exceder los 1000 caracteres');
+  }
+  if (data.ubicacion && data.ubicacion.length > 255) {
+    throw new Error('La ubicación no puede exceder los 255 caracteres');
+  }
+  if (data.habilidades && data.habilidades.length > 500) {
+    throw new Error('Las habilidades no pueden exceder los 500 caracteres');
+  }
+  if (data.telefono && !isValidPhone(data.telefono)) {
+    throw new Error('El formato del teléfono no es válido');
+  }
+  if (data.sitio_web && !isValidUrl(data.sitio_web)) {
+    throw new Error('El formato de la URL no es válido');
+  }
+  if (data.experiencia && data.experiencia.length > 2000) {
+    throw new Error('La experiencia no puede exceder los 2000 caracteres');
+  }
+  if (data.educacion && data.educacion.length > 2000) {
+    throw new Error('La educación no puede exceder los 2000 caracteres');
+  }
+  if (data.certificaciones && data.certificaciones.length > 2000) {
+    throw new Error('Las certificaciones no pueden exceder los 2000 caracteres');
+  }
+  if (data.intereses && data.intereses.length > 500) {
+    throw new Error('Los intereses no pueden exceder los 500 caracteres');
+  }
+
+  const response = await api.post('/api/profile', {
+    tipoPerfil: data.tipo_perfil, // Map to backend field name
+    descripcion: data.descripcion,
+    ubicacion: data.ubicacion,
+    habilidades: data.habilidades,
+    telefono: data.telefono,
+    sitioWeb: data.sitio_web,
+    experiencia: data.experiencia,
+    educacion: data.educacion,
+    certificaciones: data.certificaciones,
+    intereses: data.intereses,
+  });
   return response.data;
 };
 
@@ -128,8 +172,8 @@ export const uploadProfilePhoto = async (perfil_id: number, photo: FormData) => 
 };
 
 export const updateUserActivo = async () => {
-  await api.patch('/api/usuarios/activo'); // Assume endpoint to update 'activo' field
+  const response = await api.patch('/api/usuarios/activo');
+  return response.data;
 };
 
-// Export the api instance if needed for other calls
 export default api;

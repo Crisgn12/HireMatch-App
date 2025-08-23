@@ -1,47 +1,63 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, Image, Keyboard, Pressable, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
-import { loginUser } from '../services/api';
+import { Image, Keyboard, Pressable, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
+import { getUserProfile, loginUser } from '../services/api';
 
 const Login = () => {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
       const token = await AsyncStorage.getItem('token');
       if (token) {
-        router.replace('../(tabs)/home');
+        try {
+          await getUserProfile(); // Check if profile exists
+          router.replace('/(tabs)/profile');
+        } catch (err) {
+          // Silently clear token if profile doesn't exist or token is invalid
+          await AsyncStorage.removeItem('token');
+          console.log('Token cleared due to invalid session or missing profile:', err);
+        }
       }
     };
     checkAuth();
   }, [router]);
 
   const handleLogin = async () => {
+    if (!email || !password) {
+      setError('Por favor, completa todos los campos.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
     try {
-      if (!email || !password) {
-        Alert.alert('Error', 'Por favor, completa todos los campos.');
-        return;
-      }
-
       const response = await loginUser({ email, password });
-
       if (response.token) {
         await AsyncStorage.setItem('token', response.token);
         console.log('Token almacenado:', response.token);
-        router.replace('../(tabs)/home');
+        try {
+          await getUserProfile(); // Check if profile exists
+          router.replace('/(tabs)/profile');
+        } catch (err) {
+          // Redirect to ProfileCompletion if no profile
+          router.replace({ pathname: '../auth/ProfileCompletion', params: { email } });
+        }
       } else {
-        Alert.alert('Error', 'No se recibió un token válido.');
+        setError('No se recibió un token válido.');
       }
     } catch (error) {
-      let errorMessage = 'Error al iniciar sesión. Intenta de nuevo.';
-      if (error && typeof error === 'object' && 'message' in error) {
-        errorMessage = String((error as { message?: string }).message) || errorMessage;
-      }
-      Alert.alert('Error', errorMessage);
+      console.error('Login error:', error);
+      const errorMessage = (error as Error).message || 'Error al iniciar sesión. Intenta de nuevo.';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -73,6 +89,7 @@ const Login = () => {
             autoCapitalize="none"
             returnKeyType="done"
             onSubmitEditing={handleSubmitEditing}
+            editable={!loading}
           />
           <TextInput
             value={password}
@@ -82,13 +99,18 @@ const Login = () => {
             placeholder="Contraseña"
             returnKeyType="done"
             onSubmitEditing={handleSubmitEditing}
+            editable={!loading}
           />
           {error ? (
             <Text className="text-red-500 text-center">{error}</Text>
           ) : null}
-          <Pressable onPress={handleLogin}>
-            <Text className="text-center text-white bg-primary p-3 rounded-xl font-semibold">
-              Iniciar Sesión
+          <Pressable onPress={handleLogin} disabled={loading}>
+            <Text
+              className={`text-center text-white bg-primary p-3 rounded-xl font-semibold ${
+                loading ? 'opacity-50' : ''
+              }`}
+            >
+              {loading ? 'Iniciando...' : 'Iniciar Sesión'}
             </Text>
           </Pressable>
           <View className="flex-row justify-between items-center mt-2">
@@ -96,7 +118,7 @@ const Login = () => {
             <Text>Ó</Text>
             <View className="border border-gray-300 w-[40%]" />
           </View>
-          <Pressable className="border border-primary rounded-xl" onPress={() => router.push('../auth/register')}>
+          <Pressable className="border border-primary rounded-xl" onPress={() => router.push('/auth/register')}>
             <Text className="text-center text-primary p-3 rounded-xl font-semibold">
               Regístrate
             </Text>

@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, Keyboard, Pressable, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
-import { verifyCode } from '../services/api';
+import { resendCode, verifyCode } from '../services/api';
 
 const Verify = () => {
   const [code, setCode] = useState('');
@@ -17,21 +17,48 @@ const Verify = () => {
       return;
     }
 
+    // Validate 6-digit code
+    if (!/^\d{6}$/.test(code)) {
+      setError('El código debe tener exactamente 6 dígitos');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
       const data = await verifyCode({ email, code });
-      Alert.alert('Éxito', data.mensaje || 'Cuenta verificada correctamente');
-      router.navigate('/auth/login');
+      if (data.verificado) {
+        Alert.alert('Éxito', data.mensaje || 'Cuenta verificada correctamente');
+        router.navigate('/auth/login');
+      } else {
+        setError(data.mensaje || 'Código inválido o expirado');
+      }
     } catch (err) {
+      console.error('Verification error:', err); // Log full error for debugging
       setError((err as Error).message || 'Error al verificar');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleResendCode = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const data = await resendCode({ email });
+      Alert.alert('Éxito', data.mensaje || 'Código de verificación reenviado correctamente');
+    } catch (err) {
+      console.error('Resend code error:', err); // Log full error for debugging
+      setError((err as Error).message || 'Error al reenviar el código');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmitEditing = () => {
+    handleVerify(); // Trigger verification on "Done" press
     Keyboard.dismiss();
   };
 
@@ -79,7 +106,7 @@ const Verify = () => {
             </Text>
           </Pressable>
 
-          <Pressable onPress={() => router.navigate('/auth/register')} disabled={loading}>
+          <Pressable onPress={handleResendCode} disabled={loading}>
             <Text
               className={`text-center text-primary p-3 rounded-xl font-semibold border border-primary ${
                 loading ? 'opacity-50' : ''

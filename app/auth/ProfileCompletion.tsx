@@ -2,7 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, Keyboard, Pressable, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
-import { createProfile, uploadProfilePhoto } from '../services/api';
+import { createProfile, uploadProfilePhoto, updateUserActivo } from '../services/api';
 
 const ProfileCompletion = () => {
   const router = useRouter();
@@ -25,17 +25,66 @@ const ProfileCompletion = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Client-side validation
+  const validateStep = () => {
+    if (step === 1) {
+      if (!formData.tipo_perfil) {
+        return 'Selecciona un tipo de perfil';
+      }
+      if (!formData.descripcion || formData.descripcion.trim() === '') {
+        return 'La descripción es obligatoria';
+      }
+      if (formData.descripcion.length > 1000) {
+        return 'La descripción no puede exceder los 1000 caracteres';
+      }
+      if (formData.ubicacion && formData.ubicacion.length > 255) {
+        return 'La ubicación no puede exceder los 255 caracteres';
+      }
+      if (formData.telefono && !/^[+\d\s\-()]+$/.test(formData.telefono)) {
+        return 'El formato del teléfono no es válido';
+      }
+      if (formData.sitio_web && !/^(https?:\/\/)?(www\.)?[a-zA-Z0-9\-\.]+.[a-zA-Z]{2,}(\/.*)?$/.test(formData.sitio_web)) {
+        return 'El formato de la URL no es válido';
+      }
+    }
+    if (step === 2) {
+      if (!formData.experiencia || formData.experiencia.trim() === '') {
+        return 'La experiencia es obligatoria';
+      }
+      if (formData.experiencia.length > 2000) {
+        return 'La experiencia no puede exceder los 2000 caracteres';
+      }
+      if (!formData.educacion || formData.educacion.trim() === '') {
+        return 'La educación es obligatoria';
+      }
+      if (formData.educacion.length > 2000) {
+        return 'La educación no puede exceder los 2000 caracteres';
+      }
+      if (formData.certificaciones && formData.certificaciones.length > 2000) {
+        return 'Las certificaciones no pueden exceder los 2000 caracteres';
+      }
+    }
+    if (step === 3) {
+      if (!formData.habilidades || formData.habilidades.trim() === '') {
+        return 'Las habilidades son obligatorias';
+      }
+      if (formData.habilidades.length > 500) {
+        return 'Las habilidades no pueden exceder los 500 caracteres';
+      }
+      if (formData.intereses && formData.intereses.length > 500) {
+        return 'Los intereses no pueden exceder los 500 caracteres';
+      }
+      if (!formData.foto) {
+        return 'Selecciona una foto de perfil';
+      }
+    }
+    return '';
+  };
+
   const handleNext = () => {
-    if (step === 1 && (!formData.tipo_perfil || !formData.descripcion || !formData.ubicacion)) {
-      setError('Por favor, completa los campos obligatorios');
-      return;
-    }
-    if (step === 2 && (!formData.experiencia || !formData.educacion)) {
-      setError('Por favor, completa los campos obligatorios');
-      return;
-    }
-    if (step === 3 && (!formData.habilidades || !formData.foto)) {
-      setError('Por favor, completa los campos obligatorios y selecciona una foto');
+    const validationError = validateStep();
+    if (validationError) {
+      setError(validationError);
       return;
     }
     setError('');
@@ -68,6 +117,11 @@ const ProfileCompletion = () => {
     });
 
     if (!result.canceled && result.assets[0]) {
+      // Validate file size (max 5MB)
+      if (result.assets[0].fileSize && result.assets[0].fileSize > 5 * 1024 * 1024) {
+        setError('La imagen no puede exceder los 5MB');
+        return;
+      }
       setFormData({ ...formData, foto: result.assets[0] });
     }
   };
@@ -84,6 +138,7 @@ const ProfileCompletion = () => {
         telefono: formData.telefono,
         sitio_web: formData.sitio_web,
         experiencia: formData.experiencia,
+        habilidades: formData.habilidades,
         educacion: formData.educacion,
         certificaciones: formData.certificaciones,
         intereses: formData.intereses,
@@ -93,15 +148,18 @@ const ProfileCompletion = () => {
         const formDataPhoto = new FormData();
         formDataPhoto.append('foto', {
           uri: formData.foto.uri,
-          name: `profile_${profileResponse.perfil_id}.jpg`,
+          name: `profile_${profileResponse.perfilId}.jpg`, // Match backend naming
           type: 'image/jpeg',
         } as any);
-        await uploadProfilePhoto(profileResponse.perfil_id, formDataPhoto);
+        await uploadProfilePhoto(profileResponse.perfilId, formDataPhoto);
       }
 
-      Alert.alert('Éxito', 'Perfil completado correctamente');
-      router.navigate('../(tabs)/home');
+      await updateUserActivo();
+
+      Alert.alert('Éxito', profileResponse.mensaje || 'Perfil completado correctamente');
+      router.navigate('/(tabs)/profile');
     } catch (err) {
+      console.error('Profile completion error:', err);
       setError((err as Error).message || 'Error al guardar el perfil');
     } finally {
       setLoading(false);
@@ -167,9 +225,9 @@ const ProfileCompletion = () => {
               </View>
               <TextInput
                 className="border border-gray-300 rounded-xl p-3 w-full mb-4"
-                placeholder="Descripción (máx. 255 caracteres)"
+                placeholder="Descripción (máx. 1000 caracteres)"
                 value={formData.descripcion}
-                onChangeText={(text) => setFormData({ ...formData, descripcion: text.slice(0, 255) })}
+                onChangeText={(text) => setFormData({ ...formData, descripcion: text.slice(0, 1000) })}
                 multiline
                 editable={!loading}
                 returnKeyType="done"
@@ -177,9 +235,9 @@ const ProfileCompletion = () => {
               />
               <TextInput
                 className="border border-gray-300 rounded-xl p-3 w-full mb-4"
-                placeholder="Ubicación (máx. 150 caracteres)"
+                placeholder="Ubicación (máx. 255 caracteres)"
                 value={formData.ubicacion}
-                onChangeText={(text) => setFormData({ ...formData, ubicacion: text.slice(0, 150) })}
+                onChangeText={(text) => setFormData({ ...formData, ubicacion: text.slice(0, 255) })}
                 editable={!loading}
                 returnKeyType="done"
                 onSubmitEditing={handleSubmitEditing}
@@ -211,9 +269,9 @@ const ProfileCompletion = () => {
             <>
               <TextInput
                 className="border border-gray-300 rounded-xl p-3 w-full mb-4"
-                placeholder="Experiencia laboral"
+                placeholder="Experiencia laboral (máx. 2000 caracteres)"
                 value={formData.experiencia}
-                onChangeText={(text) => setFormData({ ...formData, experiencia: text })}
+                onChangeText={(text) => setFormData({ ...formData, experiencia: text.slice(0, 2000) })}
                 multiline
                 numberOfLines={4}
                 editable={!loading}
@@ -222,9 +280,9 @@ const ProfileCompletion = () => {
               />
               <TextInput
                 className="border border-gray-300 rounded-xl p-3 w-full mb-4"
-                placeholder="Educación"
+                placeholder="Educación (máx. 2000 caracteres)"
                 value={formData.educacion}
-                onChangeText={(text) => setFormData({ ...formData, educacion: text })}
+                onChangeText={(text) => setFormData({ ...formData, educacion: text.slice(0, 2000) })}
                 multiline
                 numberOfLines={4}
                 editable={!loading}
@@ -233,9 +291,9 @@ const ProfileCompletion = () => {
               />
               <TextInput
                 className="border border-gray-300 rounded-xl p-3 w-full mb-4"
-                placeholder="Certificaciones"
+                placeholder="Certificaciones (máx. 2000 caracteres)"
                 value={formData.certificaciones}
-                onChangeText={(text) => setFormData({ ...formData, certificaciones: text })}
+                onChangeText={(text) => setFormData({ ...formData, certificaciones: text.slice(0, 2000) })}
                 multiline
                 numberOfLines={4}
                 editable={!loading}
@@ -249,9 +307,9 @@ const ProfileCompletion = () => {
             <>
               <TextInput
                 className="border border-gray-300 rounded-xl p-3 w-full mb-4"
-                placeholder="Habilidades (máx. 255 caracteres)"
+                placeholder="Habilidades (máx. 500 caracteres)"
                 value={formData.habilidades}
-                onChangeText={(text) => setFormData({ ...formData, habilidades: text.slice(0, 255) })}
+                onChangeText={(text) => setFormData({ ...formData, habilidades: text.slice(0, 500) })}
                 multiline
                 editable={!loading}
                 returnKeyType="done"
@@ -259,9 +317,9 @@ const ProfileCompletion = () => {
               />
               <TextInput
                 className="border border-gray-300 rounded-xl p-3 w-full mb-4"
-                placeholder="Intereses"
+                placeholder="Intereses (máx. 500 caracteres)"
                 value={formData.intereses}
-                onChangeText={(text) => setFormData({ ...formData, intereses: text })}
+                onChangeText={(text) => setFormData({ ...formData, intereses: text.slice(0, 500) })}
                 multiline
                 numberOfLines={4}
                 editable={!loading}
