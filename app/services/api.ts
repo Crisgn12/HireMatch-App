@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://192.168.0.12:8080';
+const API_BASE_URL = 'http://192.168.100.100:8080';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -174,6 +174,32 @@ export const uploadProfilePhoto = async (perfil_id: number, photo: FormData) => 
 export const updateUserActivo = async () => {
   const response = await api.patch('/api/usuarios/activo');
   return response.data;
+};
+
+// Interfaz para los datos del perfil que se envían al endpoint
+interface UpdateProfilePayload {
+  descripcion: string;
+  ubicacion: string;
+  telefono: string;
+  sitioWeb: string;
+  experiencia: string;
+  educacion: string;
+  certificaciones: string;
+  habilidades: string;
+  intereses: string;
+}
+
+export const updateUserProfile = async (data: UpdateProfilePayload) => {
+  try {
+    const response = await axios.put('/api/profile/me', data, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al actualizar el perfil: ' + (error as Error).message);
+  }
 };
 
 export default api;

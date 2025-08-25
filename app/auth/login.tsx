@@ -17,7 +17,7 @@ const Login = () => {
       if (token) {
         try {
           await getUserProfile(); // Check if profile exists
-          router.replace('/(tabs)/profile');
+          router.replace('/(tabs)/home');
         } catch (err) {
           // Silently clear token if profile doesn't exist or token is invalid
           await AsyncStorage.removeItem('token');
@@ -44,7 +44,7 @@ const Login = () => {
         console.log('Token almacenado:', response.token);
         try {
           await getUserProfile(); // Check if profile exists
-          router.replace('/(tabs)/profile');
+          router.replace('/(tabs)/home');
         } catch (err) {
           // Redirect to ProfileCompletion if no profile
           router.replace({ pathname: '../auth/ProfileCompletion', params: { email } });
