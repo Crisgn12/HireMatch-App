@@ -16,6 +16,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="home"
           options={{
+            title: 'Bienvenido',
             tabBarLabel: 'Inicio',
             tabBarIcon: ({ color, size }) => (
               <Icon name="home" size={size} color={color} />
@@ -25,6 +26,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="profile"
           options={{
+            title: 'Mi Perfil',
             tabBarLabel: 'Perfil',
             tabBarIcon: ({ color, size }) => (
               <Icon name="person" size={size} color={color} />

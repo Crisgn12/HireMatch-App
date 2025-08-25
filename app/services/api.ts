@@ -191,11 +191,12 @@ interface UpdateProfilePayload {
 
 export const updateUserProfile = async (data: UpdateProfilePayload) => {
   try {
-    const response = await axios.put('/api/profile/me', data, {
+    const response = await api.put('/api/profile/me', data, {
       headers: {
         'Content-Type': 'application/json',
       },
     });
+    console.log('Perfil actualizado:', response.data);
     return response.data;
   } catch (error) {
     throw new Error('Error al actualizar el perfil: ' + (error as Error).message);

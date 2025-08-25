@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Image, ScrollView, Text, View, Modal, TextInput, TouchableOpacity } from 'react-native';
+import { Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { getUserProfile, updateUserProfile } from '../services/api';
 
@@ -34,10 +35,11 @@ const Profile = () => {
     tipo_perfil: 'postulante',
     foto: null,
   });
-  const [modalFormData, setModalFormData] = useState<ProfileFormData>(formData); // Estado para el formulario del modal
+  const [modalFormData, setModalFormData] = useState<ProfileFormData>(formData);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [modalVisible, setModalVisible] = useState(false); // Estado para controlar el modal
+  const [modalVisible, setModalVisible] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); // Estado para el botón "Guardar"
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -58,7 +60,7 @@ const Profile = () => {
           foto: profile.fotoUrl || null,
         };
         setFormData(updatedFormData);
-        setModalFormData(updatedFormData); // Inicializar el formulario del modal con los datos del perfil
+        setModalFormData(updatedFormData);
       } catch (err) {
         setError((err as Error).message || 'Error al cargar el perfil');
       } finally {
@@ -75,6 +77,14 @@ const Profile = () => {
 
   // Guardar los cambios del perfil
   const handleSave = async () => {
+    console.log('handleSave ejecutado con payload:', modalFormData); // Depuración
+    if (JSON.stringify(modalFormData) === JSON.stringify(formData)) {
+      console.log('No hay cambios para guardar');
+      setModalVisible(false);
+      return;
+    }
+
+    setIsSaving(true);
     try {
       const payload = {
         descripcion: modalFormData.descripcion,
@@ -87,20 +97,35 @@ const Profile = () => {
         certificaciones: modalFormData.certificaciones,
         intereses: modalFormData.intereses,
       };
+      console.log('Enviando solicitud PUT con payload:', payload); // Depuración
       await updateUserProfile(payload);
-      setFormData((prev) => ({ ...prev, ...modalFormData })); // Actualizar los datos en la vista principal
-      setModalVisible(false); // Cerrar el modal
-      setError(''); // Limpiar errores
+      setFormData((prev) => ({ ...prev, ...modalFormData }));
+      setModalVisible(false);
+      setError('');
+      Toast.show({
+        type: 'success',
+        text1: 'Perfil actualizado',
+        text2: 'Los cambios se han guardado correctamente.',
+      });
     } catch (err) {
-      setError((err as Error).message || 'Error al actualizar el perfil');
+      const errorMessage = (err as Error).message || 'Error al actualizar el perfil';
+      console.error('Error en handleSave:', errorMessage); // Depuración
+      setError(errorMessage);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: errorMessage,
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   // Cancelar la edición y cerrar el modal
   const handleCancel = () => {
-    setModalFormData(formData); // Restaurar los datos originales
-    setModalVisible(false); // Cerrar el modal
-    setError(''); // Limpiar errores
+    setModalFormData(formData);
+    setModalVisible(false);
+    setError('');
   };
 
   if (loading) {
@@ -438,13 +463,14 @@ const Profile = () => {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleSave}
-                className="bg-primary rounded-full px-6 py-2"
+                disabled={isSaving}
+                className={`bg-primary rounded-full px-6 py-2 ${isSaving ? 'opacity-50' : ''}`}
               >
                 <Text
                   style={{ fontFamily: 'Poppins-SemiBold' }}
                   className="text-white text-base"
                 >
-                  Guardar
+                  {isSaving ? 'Guardando...' : 'Guardar'}
                 </Text>
               </TouchableOpacity>
             </View>
