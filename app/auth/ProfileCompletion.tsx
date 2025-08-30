@@ -2,7 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, Keyboard, Pressable, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
-import { createProfile, uploadProfilePhoto, updateUserActivo } from '../services/api';
+import { createProfile, updateUserActivo, uploadProfilePhoto } from '../services/api';
 
 const ProfileCompletion = () => {
   const router = useRouter();
@@ -11,6 +11,7 @@ const ProfileCompletion = () => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     tipo_perfil: 'postulante' as 'postulante' | 'empresa',
+    nombre_empresa: '',
     descripcion: '',
     ubicacion: '',
     telefono: '',
@@ -31,6 +32,12 @@ const ProfileCompletion = () => {
       if (!formData.tipo_perfil) {
         return 'Selecciona un tipo de perfil';
       }
+      if (formData.tipo_perfil === 'empresa' && (!formData.nombre_empresa || formData.nombre_empresa.trim() === '')) {
+        return 'El nombre de la empresa es obligatorio';
+      }
+      if (formData.nombre_empresa && formData.nombre_empresa.length > 150) {
+        return 'El nombre de la empresa no puede exceder los 150 caracteres';
+      }
       if (!formData.descripcion || formData.descripcion.trim() === '') {
         return 'La descripción es obligatoria';
       }
@@ -47,7 +54,7 @@ const ProfileCompletion = () => {
         return 'El formato de la URL no es válido';
       }
     }
-    if (step === 2) {
+    if (step === 2 && formData.tipo_perfil === 'postulante') {
       if (!formData.experiencia || formData.experiencia.trim() === '') {
         return 'La experiencia es obligatoria';
       }
@@ -117,7 +124,6 @@ const ProfileCompletion = () => {
     });
 
     if (!result.canceled && result.assets[0]) {
-      // Validate file size (max 5MB)
       if (result.assets[0].fileSize && result.assets[0].fileSize > 5 * 1024 * 1024) {
         setError('La imagen no puede exceder los 5MB');
         return;
@@ -133,6 +139,7 @@ const ProfileCompletion = () => {
     try {
       const profileResponse = await createProfile({
         tipo_perfil: formData.tipo_perfil,
+        nombre_empresa: formData.nombre_empresa,
         descripcion: formData.descripcion,
         ubicacion: formData.ubicacion,
         telefono: formData.telefono,
@@ -148,7 +155,7 @@ const ProfileCompletion = () => {
         const formDataPhoto = new FormData();
         formDataPhoto.append('foto', {
           uri: formData.foto.uri,
-          name: `profile_${profileResponse.perfilId}.jpg`, // Match backend naming
+          name: `profile_${profileResponse.perfilId}.jpg`,
           type: 'image/jpeg',
         } as any);
         await uploadProfilePhoto(profileResponse.perfilId, formDataPhoto);
@@ -207,7 +214,7 @@ const ProfileCompletion = () => {
             <>
               <View className="flex-row justify-between mb-4">
                 <Pressable
-                  onPress={() => setFormData({ ...formData, tipo_perfil: 'postulante' })}
+                  onPress={() => setFormData({ ...formData, tipo_perfil: 'postulante', nombre_empresa: '' })}
                   className={`flex-1 p-3 rounded-xl mr-2 ${formData.tipo_perfil === 'postulante' ? 'bg-primary text-white' : 'bg-gray-200'}`}
                 >
                   <Text className={`text-center font-semibold ${formData.tipo_perfil === 'postulante' ? 'text-white' : 'text-gray-700'}`}>
@@ -223,6 +230,17 @@ const ProfileCompletion = () => {
                   </Text>
                 </Pressable>
               </View>
+              {formData.tipo_perfil === 'empresa' && (
+                <TextInput
+                  className="border border-gray-300 rounded-xl p-3 w-full mb-4"
+                  placeholder="Nombre de la empresa (máx. 150 caracteres)"
+                  value={formData.nombre_empresa}
+                  onChangeText={(text) => setFormData({ ...formData, nombre_empresa: text.slice(0, 150) })}
+                  editable={!loading}
+                  returnKeyType="done"
+                  onSubmitEditing={handleSubmitEditing}
+                />
+              )}
               <TextInput
                 className="border border-gray-300 rounded-xl p-3 w-full mb-4"
                 placeholder="Descripción (máx. 1000 caracteres)"
@@ -265,7 +283,7 @@ const ProfileCompletion = () => {
             </>
           )}
 
-          {step === 2 && (
+          {step === 2 && formData.tipo_perfil === 'postulante' && (
             <>
               <TextInput
                 className="border border-gray-300 rounded-xl p-3 w-full mb-4"

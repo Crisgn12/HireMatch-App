@@ -7,6 +7,7 @@ import { getUserProfile, updateUserProfile } from '../services/api';
 
 // Definir el tipo para los datos del formulario
 interface ProfileFormData {
+  nombre_empresa: string;
   descripcion: string;
   ubicacion: string;
   telefono: string;
@@ -23,6 +24,7 @@ interface ProfileFormData {
 const Profile = () => {
   const router = useRouter();
   const [formData, setFormData] = useState<ProfileFormData>({
+    nombre_empresa: '',
     descripcion: '',
     ubicacion: '',
     telefono: '',
@@ -39,7 +41,7 @@ const Profile = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-  const [isSaving, setIsSaving] = useState(false); // Estado para el botón "Guardar"
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -47,10 +49,11 @@ const Profile = () => {
       try {
         const profile = await getUserProfile();
         const updatedFormData = {
+          nombre_empresa: profile.nombreEmpresa || '',
           descripcion: profile.descripcion || '',
           ubicacion: profile.ubicacion || '',
           telefono: profile.telefono || '',
-          sitio_web: profile.sitio_web || '',
+          sitio_web: profile.sitioWeb || '',
           experiencia: profile.experiencia || '',
           habilidades: profile.habilidades || '',
           educacion: profile.educacion || '',
@@ -77,7 +80,52 @@ const Profile = () => {
 
   // Guardar los cambios del perfil
   const handleSave = async () => {
-    console.log('handleSave ejecutado con payload:', modalFormData); // Depuración
+    console.log('handleSave ejecutado con payload:', modalFormData);
+    if (modalFormData.tipo_perfil === 'empresa' && (!modalFormData.nombre_empresa || modalFormData.nombre_empresa.trim() === '')) {
+      setError('El nombre de la empresa es obligatorio');
+      return;
+    }
+    if (modalFormData.nombre_empresa && modalFormData.nombre_empresa.length > 150) {
+      setError('El nombre de la empresa no puede exceder los 150 caracteres');
+      return;
+    }
+    if (modalFormData.descripcion && modalFormData.descripcion.length > 1000) {
+      setError('La descripción no puede exceder los 1000 caracteres');
+      return;
+    }
+    if (modalFormData.ubicacion && modalFormData.ubicacion.length > 255) {
+      setError('La ubicación no puede exceder los 255 caracteres');
+      return;
+    }
+    if (modalFormData.telefono && !/^[+\d\s\-()]+$/.test(modalFormData.telefono)) {
+      setError('El formato del teléfono no es válido');
+      return;
+    }
+    if (modalFormData.sitio_web && !/^(https?:\/\/)?(www\.)?[a-zA-Z0-9\-\.]+.[a-zA-Z]{2,}(\/.*)?$/.test(modalFormData.sitio_web)) {
+      setError('El formato de la URL no es válido');
+      return;
+    }
+    if (modalFormData.experiencia && modalFormData.experiencia.length > 2000) {
+      setError('La experiencia no puede exceder los 2000 caracteres');
+      return;
+    }
+    if (modalFormData.educacion && modalFormData.educacion.length > 2000) {
+      setError('La educación no puede exceder los 2000 caracteres');
+      return;
+    }
+    if (modalFormData.certificaciones && modalFormData.certificaciones.length > 2000) {
+      setError('Las certificaciones no pueden exceder los 2000 caracteres');
+      return;
+    }
+    if (modalFormData.habilidades && modalFormData.habilidades.length > 500) {
+      setError('Las habilidades no pueden exceder los 500 caracteres');
+      return;
+    }
+    if (modalFormData.intereses && modalFormData.intereses.length > 500) {
+      setError('Los intereses no pueden exceder los 500 caracteres');
+      return;
+    }
+
     if (JSON.stringify(modalFormData) === JSON.stringify(formData)) {
       console.log('No hay cambios para guardar');
       setModalVisible(false);
@@ -87,6 +135,7 @@ const Profile = () => {
     setIsSaving(true);
     try {
       const payload = {
+        nombre_empresa: modalFormData.nombre_empresa,
         descripcion: modalFormData.descripcion,
         ubicacion: modalFormData.ubicacion,
         telefono: modalFormData.telefono,
@@ -97,7 +146,7 @@ const Profile = () => {
         certificaciones: modalFormData.certificaciones,
         intereses: modalFormData.intereses,
       };
-      console.log('Enviando solicitud PUT con payload:', payload); // Depuración
+      console.log('Enviando solicitud PUT con payload:', payload);
       await updateUserProfile(payload);
       setFormData((prev) => ({ ...prev, ...modalFormData }));
       setModalVisible(false);
@@ -109,7 +158,7 @@ const Profile = () => {
       });
     } catch (err) {
       const errorMessage = (err as Error).message || 'Error al actualizar el perfil';
-      console.error('Error en handleSave:', errorMessage); // Depuración
+      console.error('Error en handleSave:', errorMessage);
       setError(errorMessage);
       Toast.show({
         type: 'error',
@@ -193,6 +242,26 @@ const Profile = () => {
             </View>
           ) : null}
 
+          {/* Empresa Info Section (for empresa profiles) */}
+          {formData.tipo_perfil === 'empresa' && (
+            <View className="bg-white rounded-2xl shadow-md p-6 mb-6">
+              <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-lg text-gray-800 mb-4">
+                Información de la Empresa
+              </Text>
+              <View className="flex-row items-center mb-3">
+                <Icon name="business" size={20} color="#4B5563" />
+                <View className="ml-3 flex-1">
+                  <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-gray-700 text-sm">
+                    Nombre de la Empresa
+                  </Text>
+                  <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600">
+                    {formData.nombre_empresa || 'No disponible'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+
           {/* Personal Info Section */}
           <View className="bg-white rounded-2xl shadow-md p-6 mb-6">
             <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-lg text-gray-800 mb-4">
@@ -257,45 +326,47 @@ const Profile = () => {
             </View>
           </View>
 
-          {/* Professional Info Section */}
-          <View className="bg-white rounded-2xl shadow-md p-6 mb-6">
-            <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-lg text-gray-800 mb-4">
-              Información Profesional
-            </Text>
-            <View className="flex-row items-center mb-3">
-              <Icon name="work-outline" size={20} color="#4B5563" />
-              <View className="ml-3 flex-1">
-                <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-gray-700 text-sm">
-                  Experiencia
-                </Text>
-                <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600">
-                  {formData.experiencia || 'No disponible'}
-                </Text>
+          {/* Professional Info Section (only for postulante) */}
+          {formData.tipo_perfil === 'postulante' && (
+            <View className="bg-white rounded-2xl shadow-md p-6 mb-6">
+              <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-lg text-gray-800 mb-4">
+                Información Profesional
+              </Text>
+              <View className="flex-row items-center mb-3">
+                <Icon name="work-outline" size={20} color="#4B5563" />
+                <View className="ml-3 flex-1">
+                  <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-gray-700 text-sm">
+                    Experiencia
+                  </Text>
+                  <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600">
+                    {formData.experiencia || 'No disponible'}
+                  </Text>
+                </View>
+              </View>
+              <View className="flex-row items-center mb-3">
+                <Icon name="school" size={20} color="#4B5563" />
+                <View className="ml-3 flex-1">
+                  <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-gray-700 text-sm">
+                    Educación
+                  </Text>
+                  <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600">
+                    {formData.educacion || 'No disponible'}
+                  </Text>
+                </View>
+              </View>
+              <View className="flex-row items-center">
+                <Icon name="verified" size={20} color="#4B5563" />
+                <View className="ml-3 flex-1">
+                  <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-gray-700 text-sm">
+                    Certificaciones
+                  </Text>
+                  <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600">
+                    {formData.certificaciones || 'No disponible'}
+                  </Text>
+                </View>
               </View>
             </View>
-            <View className="flex-row items-center mb-3">
-              <Icon name="school" size={20} color="#4B5563" />
-              <View className="ml-3 flex-1">
-                <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-gray-700 text-sm">
-                  Educación
-                </Text>
-                <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600">
-                  {formData.educacion || 'No disponible'}
-                </Text>
-              </View>
-            </View>
-            <View className="flex-row items-center">
-              <Icon name="verified" size={20} color="#4B5563" />
-              <View className="ml-3 flex-1">
-                <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-gray-700 text-sm">
-                  Certificaciones
-                </Text>
-                <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600">
-                  {formData.certificaciones || 'No disponible'}
-                </Text>
-              </View>
-            </View>
-          </View>
+          )}
 
           {/* Additional Info Section */}
           <View className="bg-white rounded-2xl shadow-md p-6 mb-8">
@@ -341,6 +412,19 @@ const Profile = () => {
               Editar Perfil
             </Text>
             <ScrollView>
+              {modalFormData.tipo_perfil === 'empresa' && (
+                <View className="mb-4">
+                  <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-gray-700 text-sm mb-1">
+                    Nombre de la Empresa
+                  </Text>
+                  <TextInput
+                    style={{ fontFamily: 'Poppins-Regular' }}
+                    className="border border-gray-300 rounded-lg p-2 text-gray-600"
+                    value={modalFormData.nombre_empresa}
+                    onChangeText={(text) => handleInputChange('nombre_empresa', text.slice(0, 150))}
+                  />
+                </View>
+              )}
               <View className="mb-4">
                 <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-gray-700 text-sm mb-1">
                   Descripción
@@ -349,7 +433,7 @@ const Profile = () => {
                   style={{ fontFamily: 'Poppins-Regular' }}
                   className="border border-gray-300 rounded-lg p-2 text-gray-600"
                   value={modalFormData.descripcion}
-                  onChangeText={(text) => handleInputChange('descripcion', text)}
+                  onChangeText={(text) => handleInputChange('descripcion', text.slice(0, 1000))}
                   multiline
                 />
               </View>
@@ -361,7 +445,7 @@ const Profile = () => {
                   style={{ fontFamily: 'Poppins-Regular' }}
                   className="border border-gray-300 rounded-lg p-2 text-gray-600"
                   value={modalFormData.ubicacion}
-                  onChangeText={(text) => handleInputChange('ubicacion', text)}
+                  onChangeText={(text) => handleInputChange('ubicacion', text.slice(0, 255))}
                 />
               </View>
               <View className="mb-4">
@@ -372,7 +456,7 @@ const Profile = () => {
                   style={{ fontFamily: 'Poppins-Regular' }}
                   className="border border-gray-300 rounded-lg p-2 text-gray-600"
                   value={modalFormData.telefono}
-                  onChangeText={(text) => handleInputChange('telefono', text)}
+                  onChangeText={(text) => handleInputChange('telefono', text.slice(0, 20))}
                   keyboardType="phone-pad"
                 />
               </View>
@@ -384,46 +468,50 @@ const Profile = () => {
                   style={{ fontFamily: 'Poppins-Regular' }}
                   className="border border-gray-300 rounded-lg p-2 text-gray-600"
                   value={modalFormData.sitio_web}
-                  onChangeText={(text) => handleInputChange('sitio_web', text)}
+                  onChangeText={(text) => handleInputChange('sitio_web', text.slice(0, 255))}
                   keyboardType="url"
                 />
               </View>
-              <View className="mb-4">
-                <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-gray-700 text-sm mb-1">
-                  Experiencia
-                </Text>
-                <TextInput
-                  style={{ fontFamily: 'Poppins-Regular' }}
-                  className="border border-gray-300 rounded-lg p-2 text-gray-600"
-                  value={modalFormData.experiencia}
-                  onChangeText={(text) => handleInputChange('experiencia', text)}
-                  multiline
-                />
-              </View>
-              <View className="mb-4">
-                <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-gray-700 text-sm mb-1">
-                  Educación
-                </Text>
-                <TextInput
-                  style={{ fontFamily: 'Poppins-Regular' }}
-                  className="border border-gray-300 rounded-lg p-2 text-gray-600"
-                  value={modalFormData.educacion}
-                  onChangeText={(text) => handleInputChange('educacion', text)}
-                  multiline
-                />
-              </View>
-              <View className="mb-4">
-                <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-gray-700 text-sm mb-1">
-                  Certificaciones
-                </Text>
-                <TextInput
-                  style={{ fontFamily: 'Poppins-Regular' }}
-                  className="border border-gray-300 rounded-lg p-2 text-gray-600"
-                  value={modalFormData.certificaciones}
-                  onChangeText={(text) => handleInputChange('certificaciones', text)}
-                  multiline
-                />
-              </View>
+              {modalFormData.tipo_perfil === 'postulante' && (
+                <>
+                  <View className="mb-4">
+                    <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-gray-700 text-sm mb-1">
+                      Experiencia
+                    </Text>
+                    <TextInput
+                      style={{ fontFamily: 'Poppins-Regular' }}
+                      className="border border-gray-300 rounded-lg p-2 text-gray-600"
+                      value={modalFormData.experiencia}
+                      onChangeText={(text) => handleInputChange('experiencia', text.slice(0, 2000))}
+                      multiline
+                    />
+                  </View>
+                  <View className="mb-4">
+                    <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-gray-700 text-sm mb-1">
+                      Educación
+                    </Text>
+                    <TextInput
+                      style={{ fontFamily: 'Poppins-Regular' }}
+                      className="border border-gray-300 rounded-lg p-2 text-gray-600"
+                      value={modalFormData.educacion}
+                      onChangeText={(text) => handleInputChange('educacion', text.slice(0, 2000))}
+                      multiline
+                    />
+                  </View>
+                  <View className="mb-4">
+                    <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-gray-700 text-sm mb-1">
+                      Certificaciones
+                    </Text>
+                    <TextInput
+                      style={{ fontFamily: 'Poppins-Regular' }}
+                      className="border border-gray-300 rounded-lg p-2 text-gray-600"
+                      value={modalFormData.certificaciones}
+                      onChangeText={(text) => handleInputChange('certificaciones', text.slice(0, 2000))}
+                      multiline
+                    />
+                  </View>
+                </>
+              )}
               <View className="mb-4">
                 <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-gray-700 text-sm mb-1">
                   Habilidades
@@ -432,7 +520,7 @@ const Profile = () => {
                   style={{ fontFamily: 'Poppins-Regular' }}
                   className="border border-gray-300 rounded-lg p-2 text-gray-600"
                   value={modalFormData.habilidades}
-                  onChangeText={(text) => handleInputChange('habilidades', text)}
+                  onChangeText={(text) => handleInputChange('habilidades', text.slice(0, 500))}
                   multiline
                 />
               </View>
@@ -444,11 +532,14 @@ const Profile = () => {
                   style={{ fontFamily: 'Poppins-Regular' }}
                   className="border border-gray-300 rounded-lg p-2 text-gray-600"
                   value={modalFormData.intereses}
-                  onChangeText={(text) => handleInputChange('intereses', text)}
+                  onChangeText={(text) => handleInputChange('intereses', text.slice(0, 500))}
                   multiline
                 />
               </View>
             </ScrollView>
+            {error ? (
+              <Text className="text-red-500 text-center mb-4">{error}</Text>
+            ) : null}
             <View className="flex-row justify-between mt-4">
               <TouchableOpacity
                 onPress={handleCancel}
