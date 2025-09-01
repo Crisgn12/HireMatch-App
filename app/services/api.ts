@@ -76,11 +76,12 @@ export const loginUser = async (data: { email: string; password: string }) => {
 };
 
 export const getUserProfile = async () => {
-  const response = await api.get('/api/profile/me');
-  return response.data; // Returns ProfileResponse with fotoUrl
+  const response = await api.get('/api/perfiles/me');
+  return response.data; // Returns ProfileResponse with nombreEmpresa, fotoUrl
 };
 
 export const updateProfile = async (data: {
+  nombre_empresa?: string;
   descripcion?: string;
   ubicacion?: string;
   telefono?: string;
@@ -92,18 +93,33 @@ export const updateProfile = async (data: {
   intereses?: string;
 }) => {
   // Validate optional fields
+  if (data.nombre_empresa && data.nombre_empresa.length > 150) {
+    throw new Error('El nombre de la empresa no puede exceder los 150 caracteres');
+  }
   if (data.telefono && !isValidPhone(data.telefono)) {
     throw new Error('El formato del teléfono no es válido');
   }
   if (data.sitio_web && !isValidUrl(data.sitio_web)) {
     throw new Error('El formato de la URL no es válido');
   }
-  const response = await api.put('/profile/me', data);
+  const response = await api.put('/api/perfiles/me', {
+    nombreEmpresa: data.nombre_empresa,
+    descripcion: data.descripcion,
+    ubicacion: data.ubicacion,
+    telefono: data.telefono,
+    sitioWeb: data.sitio_web,
+    experiencia: data.experiencia,
+    habilidades: data.habilidades,
+    educacion: data.educacion,
+    certificaciones: data.certificaciones,
+    intereses: data.intereses,
+  });
   return response.data;
 };
 
 export const createProfile = async (data: {
   tipo_perfil: 'postulante' | 'empresa';
+  nombre_empresa?: string;
   descripcion?: string;
   ubicacion?: string;
   habilidades?: string;
@@ -114,11 +130,17 @@ export const createProfile = async (data: {
   certificaciones?: string;
   intereses?: string;
 }) => {
-  // Validate required field
+  // Validate required fields
   if (!['postulante', 'empresa'].includes(data.tipo_perfil)) {
     throw new Error('Tipo de perfil debe ser "postulante" o "empresa"');
   }
+  if (data.tipo_perfil === 'empresa' && (!data.nombre_empresa || data.nombre_empresa.trim() === '')) {
+    throw new Error('El nombre de la empresa es obligatorio para perfiles de tipo empresa');
+  }
   // Validate optional fields
+  if (data.nombre_empresa && data.nombre_empresa.length > 150) {
+    throw new Error('El nombre de la empresa no puede exceder los 150 caracteres');
+  }
   if (data.descripcion && data.descripcion.length > 1000) {
     throw new Error('La descripción no puede exceder los 1000 caracteres');
   }
@@ -147,8 +169,9 @@ export const createProfile = async (data: {
     throw new Error('Los intereses no pueden exceder los 500 caracteres');
   }
 
-  const response = await api.post('/api/profile', {
-    tipoPerfil: data.tipo_perfil, // Map to backend field name
+  const response = await api.post('/api/perfiles', {
+    tipoPerfil: data.tipo_perfil,
+    nombreEmpresa: data.nombre_empresa,
     descripcion: data.descripcion,
     ubicacion: data.ubicacion,
     habilidades: data.habilidades,
@@ -163,7 +186,7 @@ export const createProfile = async (data: {
 };
 
 export const uploadProfilePhoto = async (perfil_id: number, photo: FormData) => {
-  const response = await api.post(`/api/profile/${perfil_id}/foto`, photo, {
+  const response = await api.post(`/api/perfiles/${perfil_id}/foto`, photo, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -178,20 +201,31 @@ export const updateUserActivo = async () => {
 
 // Interfaz para los datos del perfil que se envían al endpoint
 interface UpdateProfilePayload {
+  nombre_empresa?: string;
   descripcion: string;
   ubicacion: string;
   telefono: string;
   sitioWeb: string;
   experiencia: string;
+  habilidades: string;
   educacion: string;
   certificaciones: string;
-  habilidades: string;
   intereses: string;
 }
 
 export const updateUserProfile = async (data: UpdateProfilePayload) => {
   try {
-    const response = await api.put('/api/profile/me', data, {
+    const response = await api.put('/api/perfiles/me', {
+      nombreEmpresa: data.nombre_empresa,
+      descripcion: data.descripcion,
+      ubicacion: data.ubicacion,
+      sitioWeb: data.sitioWeb,
+      experiencia: data.experiencia,
+      habilidades: data.habilidades,
+      educacion: data.educacion,
+      certificaciones: data.certificaciones,
+      intereses: data.intereses,
+    }, {
       headers: {
         'Content-Type': 'application/json',
       },
