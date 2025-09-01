@@ -1,4 +1,3 @@
-import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Toast from 'react-native-toast-message';
@@ -22,7 +21,6 @@ interface ProfileFormData {
 }
 
 const Profile = () => {
-  const router = useRouter();
   const [formData, setFormData] = useState<ProfileFormData>({
     nombre_empresa: '',
     descripcion: '',

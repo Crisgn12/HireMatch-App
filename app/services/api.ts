@@ -237,4 +237,60 @@ export const updateUserProfile = async (data: UpdateProfilePayload) => {
   }
 };
 
+
+// Interfaz para los datos de la oferta de trabajo que se envían al endpoint /ofertas
+interface CreateJobOfferPayload {
+  titulo: string;
+  descripcion: string;
+  ubicacion: string;
+  tipoTrabajo: string;
+  tipoContrato: string;
+  nivelExperiencia: string;
+  areaTrabajo: string;
+  salarioMinimo: number;
+  salarioMaximo: number;
+  moneda: string;
+  beneficios?: string;
+  requisitos?: string;
+  habilidadesRequeridas?: string;
+  idiomas?: string;
+  aplicacionRapida?: boolean;
+  preguntasAdicionales?: string;
+  permiteAplicacionExterna?: boolean;
+  urlAplicacionExterna?: string;
+}
+
+export const createJobOffer = async (data: CreateJobOfferPayload) => {
+  try {
+    const response = await api.post('/ofertas', {
+      titulo: data.titulo,
+      descripcion: data.descripcion,
+      ubicacion: data.ubicacion,
+      tipoTrabajo: data.tipoTrabajo,
+      tipoContrato: data.tipoContrato,
+      nivelExperiencia: data.nivelExperiencia,
+      areaTrabajo: data.areaTrabajo,
+      salarioMinimo: data.salarioMinimo,
+      salarioMaximo: data.salarioMaximo,
+      moneda: data.moneda,
+      beneficios: data.beneficios,
+      requisitos: data.requisitos,
+      habilidadesRequeridas: data.habilidadesRequeridas,
+      idiomas: data.idiomas,
+      aplicacionRapida: data.aplicacionRapida,
+      preguntasAdicionales: data.preguntasAdicionales,
+      permiteAplicacionExterna: data.permiteAplicacionExterna,
+      urlAplicacionExterna: data.urlAplicacionExterna,
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log('Oferta creada:', response.data);
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al crear la oferta: ' + (error as Error).message);
+  }
+};
+
 export default api;

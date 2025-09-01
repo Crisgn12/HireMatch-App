@@ -3,9 +3,11 @@ import React from 'react';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import ProtectedLayout from '../_protected';
 
-const companyLayout = () => {
+const CompanyLayout = () => {
+
   return (
     <ProtectedLayout>
+        
       <Tabs
         screenOptions={{
           headerShown: true, // Oculta el encabezado en todas las pestañas
@@ -33,6 +35,14 @@ const companyLayout = () => {
             tabBarIcon: ({ color, size }) => (
               <Icon name="cases" size={size} color={color} />
             ),
+            // headerRight: () => (
+            //   <TouchableOpacity
+            //     onPress={() => router.push('/companyExtraViews/addJobOffer')}
+            //     style={{ marginRight: 15 }}
+            //   >
+            //     <Icon name="add" size={30} color="#005187" />
+            //   </TouchableOpacity>
+            // ),
           }}
         />
         
@@ -52,4 +62,4 @@ const companyLayout = () => {
   )
 }
 
-export default companyLayout
+export default CompanyLayout
