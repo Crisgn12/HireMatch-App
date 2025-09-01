@@ -16,10 +16,18 @@ const Login = () => {
       const token = await AsyncStorage.getItem('token');
       if (token) {
         try {
-          await getUserProfile(); // Check if profile exists
-          router.replace('/(tabs)/home');
+          const profile = await getUserProfile();
+          const { tipoPerfil } = profile;
+          
+          if (tipoPerfil === 'postulante') {
+            router.replace('/(tabs)/home');
+          } else if (tipoPerfil === 'empresa') {
+            router.replace('/company/companyHome');
+          } else {
+            await AsyncStorage.removeItem('token');
+            console.log('Tipo de perfil no válido:', tipoPerfil);
+          }
         } catch (err) {
-          // Silently clear token if profile doesn't exist or token is invalid
           await AsyncStorage.removeItem('token');
           console.log('Token cleared due to invalid session or missing profile:', err);
         }
@@ -43,8 +51,17 @@ const Login = () => {
         await AsyncStorage.setItem('token', response.token);
         console.log('Token almacenado:', response.token);
         try {
-          await getUserProfile(); // Check if profile exists
-          router.replace('/(tabs)/home');
+          const profile = await getUserProfile();
+          const { tipoPerfil } = profile;
+
+          if (tipoPerfil === 'postulante') {
+            router.replace('/(tabs)/home');
+          } else if (tipoPerfil === 'empresa') {
+            router.replace('/company/companyHome');
+          } else {
+            await AsyncStorage.removeItem('token');
+            setError('Tipo de perfil no válido.');
+          }
         } catch (err) {
           // Redirect to ProfileCompletion if no profile
           router.replace({ pathname: '../auth/ProfileCompletion', params: { email } });

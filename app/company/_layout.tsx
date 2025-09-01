@@ -1,8 +1,9 @@
 import { Tabs } from 'expo-router';
-import Icon from 'react-native-vector-icons/MaterialIcons'; // Importar MaterialIcons
+import React from 'react';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import ProtectedLayout from '../_protected';
 
-export default function TabsLayout() {
+const companyLayout = () => {
   return (
     <ProtectedLayout>
       <Tabs
@@ -14,12 +15,23 @@ export default function TabsLayout() {
         }}
       >
         <Tabs.Screen
-          name="home"
+          name="companyHome"
           options={{
-            title: 'Bienvenido',
+            title: 'Inicio',
             tabBarLabel: 'Inicio',
             tabBarIcon: ({ color, size }) => (
               <Icon name="home" size={size} color={color} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="jobOffers"
+          options={{
+            title: 'Mis Ofertas',
+            tabBarLabel: 'Mis Ofertas',
+            tabBarIcon: ({ color, size }) => (
+              <Icon name="cases" size={size} color={color} />
             ),
           }}
         />
@@ -37,5 +49,7 @@ export default function TabsLayout() {
         {/* Añade más Tabs.Screen para otras vistas en la carpeta tabs si es necesario */}
       </Tabs>
     </ProtectedLayout>
-  );
+  )
 }
+
+export default companyLayout
