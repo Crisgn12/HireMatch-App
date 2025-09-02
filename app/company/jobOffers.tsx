@@ -1,6 +1,6 @@
 import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { createJobOffer, getCompanyId, getJobOffersByCompany } from '../services/api';
