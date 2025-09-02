@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://192.168.100.101:8080';
+const API_BASE_URL = 'http://192.168.0.6:8080';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -34,6 +34,10 @@ api.interceptors.response.use(
         return Promise.reject(new Error(data.message || 'Error de validación'));
       } else if (status === 401) {
         return Promise.reject(new Error('No autorizado'));
+      } else if (status === 403) {
+        return Promise.reject(new Error('Acceso denegado: No tienes permiso para realizar esta acción'));
+      } else if (status === 404) {
+        return Promise.reject(new Error('Recurso no encontrado'));
       } else if (status === 500) {
         return Promise.reject(new Error('Error en el servidor'));
       }
@@ -237,26 +241,26 @@ export const updateUserProfile = async (data: UpdateProfilePayload) => {
   }
 };
 
-
-// Interfaz para los datos de la oferta de trabajo que se envían al endpoint /ofertas
+// Interfaz actualizada para los datos de la oferta de trabajo (solo campos esenciales)
 interface CreateJobOfferPayload {
   titulo: string;
   descripcion: string;
   ubicacion: string;
-  tipoTrabajo: string;
-  tipoContrato: string;
-  nivelExperiencia: string;
+  tipoTrabajo: 'REMOTO' | 'PRESENCIAL' | 'HIBRIDO';
+  tipoContrato: 'TIEMPO_COMPLETO' | 'MEDIO_TIEMPO' | 'CONTRATO' | 'TEMPORAL' | 'FREELANCE' | 'PRACTICAS';
+  nivelExperiencia: 'ESTUDIANTE' | 'JUNIOR' | 'SEMI_SENIOR' | 'SENIOR' | 'LEAD' | 'DIRECTOR';
   areaTrabajo: string;
   salarioMinimo: number;
   salarioMaximo: number;
-  moneda: string;
+  moneda: 'USD' | 'CRC' | 'EUR' | 'MXN' | 'CAD';
+  aplicacionRapida?: boolean;
+  permiteAplicacionExterna?: boolean;
+  // Campos que se mantienen para compatibilidad con el backend pero se envían vacíos
   beneficios?: string;
   requisitos?: string;
   habilidadesRequeridas?: string;
   idiomas?: string;
-  aplicacionRapida?: boolean;
   preguntasAdicionales?: string;
-  permiteAplicacionExterna?: boolean;
   urlAplicacionExterna?: string;
 }
 
@@ -273,14 +277,15 @@ export const createJobOffer = async (data: CreateJobOfferPayload) => {
       salarioMinimo: data.salarioMinimo,
       salarioMaximo: data.salarioMaximo,
       moneda: data.moneda,
-      beneficios: data.beneficios,
-      requisitos: data.requisitos,
-      habilidadesRequeridas: data.habilidadesRequeridas,
-      idiomas: data.idiomas,
-      aplicacionRapida: data.aplicacionRapida,
-      preguntasAdicionales: data.preguntasAdicionales,
-      permiteAplicacionExterna: data.permiteAplicacionExterna,
-      urlAplicacionExterna: data.urlAplicacionExterna,
+      aplicacionRapida: data.aplicacionRapida ?? true,
+      permiteAplicacionExterna: data.permiteAplicacionExterna ?? false,
+      // Campos que se envían vacíos para compatibilidad
+      beneficios: data.beneficios || '',
+      requisitos: data.requisitos || '',
+      habilidadesRequeridas: data.habilidadesRequeridas || '',
+      idiomas: data.idiomas || '',
+      preguntasAdicionales: data.preguntasAdicionales || '',
+      urlAplicacionExterna: data.urlAplicacionExterna || '',
     }, {
       headers: {
         'Content-Type': 'application/json',
@@ -290,6 +295,43 @@ export const createJobOffer = async (data: CreateJobOfferPayload) => {
     return response.data;
   } catch (error) {
     throw new Error('Error al crear la oferta: ' + (error as Error).message);
+  }
+};
+
+export const updateJobOffer = async (id: number, data: CreateJobOfferPayload) => {
+  try {
+    console.log('Updating job offer with ID:', id, 'and data:', data); // Debug log
+    const response = await api.put(`/ofertas/${id}`, {
+      titulo: data.titulo,
+      descripcion: data.descripcion,
+      ubicacion: data.ubicacion,
+      tipoTrabajo: data.tipoTrabajo,
+      tipoContrato: data.tipoContrato,
+      nivelExperiencia: data.nivelExperiencia,
+      areaTrabajo: data.areaTrabajo,
+      salarioMinimo: data.salarioMinimo,
+      salarioMaximo: data.salarioMaximo,
+      moneda: data.moneda,
+      aplicacionRapida: data.aplicacionRapida ?? true,
+      permiteAplicacionExterna: data.permiteAplicacionExterna ?? false,
+      // Campos que se envían vacíos para compatibilidad
+      beneficios: data.beneficios || '',
+      requisitos: data.requisitos || '',
+      habilidadesRequeridas: data.habilidadesRequeridas || '',
+      idiomas: data.idiomas || '',
+      preguntasAdicionales: data.preguntasAdicionales || '',
+      urlAplicacionExterna: data.urlAplicacionExterna || '',
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log('Oferta actualizada:', response.data); // Debug log
+    return response.data;
+  } catch (error: any) {
+    console.error('Error in updateJobOffer:', error); // Detailed error logging
+    const errorMessage = error.response?.data?.message || error.message || 'Error desconocido al actualizar la oferta';
+    throw new Error(`Error al actualizar la oferta: ${errorMessage}`);
   }
 };
 
@@ -306,7 +348,7 @@ export const getJobOffersByCompany = async (empresaId: number) => {
   try {
     const response = await api.get(`/ofertas/empresa/${empresaId}`);
     return response.data;
-  }  catch (error) {
+  } catch (error) {
     throw new Error('Error al obtener las ofertas de la empresa: ' + (error as Error).message);
   }
 }
