@@ -36,7 +36,7 @@ const JobOfferComponent = ({ job }: { job: JobOffer }) => {
 
   return (
     <TouchableOpacity
-      onPress={() => router.push(`/jobDetails/${job.id}`)} // Simulación de navegación a detalles
+      onPress={() => router.push(`/companyExtraViews/${job.id}`)} // Simulación de navegación a detalles
       className="bg-white rounded-lg p-4 mb-4 shadow-md border border-gray-200"
     >
       <Text className="text-lg font-poppins-semibold text-gray-800">{job.titulo}</Text>

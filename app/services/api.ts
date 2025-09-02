@@ -311,4 +311,13 @@ export const getJobOffersByCompany = async (empresaId: number) => {
   }
 }
 
+export const getJobOfferDetails = async (ofertaId: number) => {
+  try {
+    const response = await api.get(`/ofertas/${ofertaId}`);
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al obtener los detalles de la oferta: ' + (error as Error).message);
+  }
+}
+
 export default api;
