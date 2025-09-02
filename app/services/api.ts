@@ -15,6 +15,7 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('token');
+    console.log('JWT Token:', token); // Debug log
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -255,7 +256,6 @@ interface CreateJobOfferPayload {
   moneda: 'USD' | 'CRC' | 'EUR' | 'MXN' | 'CAD';
   aplicacionRapida?: boolean;
   permiteAplicacionExterna?: boolean;
-  // Campos que se mantienen para compatibilidad con el backend pero se envían vacíos
   beneficios?: string;
   requisitos?: string;
   habilidadesRequeridas?: string;
@@ -279,7 +279,6 @@ export const createJobOffer = async (data: CreateJobOfferPayload) => {
       moneda: data.moneda,
       aplicacionRapida: data.aplicacionRapida ?? true,
       permiteAplicacionExterna: data.permiteAplicacionExterna ?? false,
-      // Campos que se envían vacíos para compatibilidad
       beneficios: data.beneficios || '',
       requisitos: data.requisitos || '',
       habilidadesRequeridas: data.habilidadesRequeridas || '',
@@ -300,7 +299,7 @@ export const createJobOffer = async (data: CreateJobOfferPayload) => {
 
 export const updateJobOffer = async (id: number, data: CreateJobOfferPayload) => {
   try {
-    console.log('Updating job offer with ID:', id, 'and data:', data); // Debug log
+    console.log('Updating job offer with ID:', id, 'and data:', JSON.stringify(data, null, 2)); // Debug log
     const response = await api.put(`/ofertas/${id}`, {
       titulo: data.titulo,
       descripcion: data.descripcion,
@@ -314,7 +313,6 @@ export const updateJobOffer = async (id: number, data: CreateJobOfferPayload) =>
       moneda: data.moneda,
       aplicacionRapida: data.aplicacionRapida ?? true,
       permiteAplicacionExterna: data.permiteAplicacionExterna ?? false,
-      // Campos que se envían vacíos para compatibilidad
       beneficios: data.beneficios || '',
       requisitos: data.requisitos || '',
       habilidadesRequeridas: data.habilidadesRequeridas || '',
@@ -335,6 +333,23 @@ export const updateJobOffer = async (id: number, data: CreateJobOfferPayload) =>
   }
 };
 
+export const deleteJobOffer = async (id: number) => {
+  try {
+    console.log('Deleting job offer with ID:', id); // Debug log
+    const response = await api.delete(`/ofertas/${id}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log('Oferta eliminada:', response.status); // Debug log
+    return response.status; // Returns 204 on success
+  } catch (error: any) {
+    console.error('Error in deleteJobOffer:', error); // Detailed error logging
+    const errorMessage = error.response?.data?.message || error.message || 'Error desconocido al eliminar la oferta';
+    throw new Error(`Error al eliminar la oferta: ${errorMessage}`);
+  }
+};
+
 export const getCompanyId = async () => {
   try {
     const response = await api.get('/api/perfiles/empresa/id');
@@ -342,7 +357,7 @@ export const getCompanyId = async () => {
   } catch (error) {
     throw new Error('Error al obtener el ID de la empresa: ' + (error as Error).message);
   }
-}
+};
 
 export const getJobOffersByCompany = async (empresaId: number) => {
   try {
@@ -351,7 +366,7 @@ export const getJobOffersByCompany = async (empresaId: number) => {
   } catch (error) {
     throw new Error('Error al obtener las ofertas de la empresa: ' + (error as Error).message);
   }
-}
+};
 
 export const getJobOfferDetails = async (ofertaId: number) => {
   try {
@@ -360,6 +375,6 @@ export const getJobOfferDetails = async (ofertaId: number) => {
   } catch (error) {
     throw new Error('Error al obtener los detalles de la oferta: ' + (error as Error).message);
   }
-}
+};
 
 export default api;

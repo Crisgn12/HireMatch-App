@@ -278,18 +278,72 @@ const JobOffers = () => {
   }, [editOfferId]);
 
   const fetchJobOffers = async () => {
-  try {
-    const companyId = await getCompanyId();
-    const response = await getJobOffersByCompany(companyId);
-    console.log('Raw job offers response:', JSON.stringify(response, null, 2));
-    const offers = response.content.map((offer: any) => {
+    try {
+      const companyId = await getCompanyId();
+      const response = await getJobOffersByCompany(companyId);
+      console.log('Raw job offers response:', JSON.stringify(response, null, 2));
+      const offers = response.content.map((offer: any) => {
+        // Parsear salarios desde salarioFormateado si están en 0
+        let salarioMin = Number(offer.salarioMinimo) || 0;
+        let salarioMax = Number(offer.salarioMaximo) || 0;
+        
+        // Si los salarios son 0 pero hay salarioFormateado, intentar parsearlo
+        if ((salarioMin === 0 || salarioMax === 0) && offer.salarioFormateado) {
+          const salarios = offer.salarioFormateado.match(/\d+/g);
+          if (salarios && salarios.length >= 2) {
+            salarioMin = parseInt(salarios[0]) || 0;
+            salarioMax = parseInt(salarios[1]) || 0;
+          }
+        }
+
+        // Determinar la moneda: prioridad moneda > monedaSimbolo > salarioFormateado
+        let moneda = offer.moneda;
+        if (!moneda && offer.monedaSimbolo) {
+          moneda = extractMonedaFromSimbolo(offer.monedaSimbolo);
+        }
+        if (!moneda && offer.salarioFormateado) {
+          moneda = extractMonedaFromFormateado(offer.salarioFormateado);
+        }
+
+        return {
+          id: offer.id,
+          titulo: offer.titulo || '',
+          descripcion: offer.descripcion || '',
+          ubicacion: offer.ubicacion || '',
+          empresaNombre: offer.empresaNombre || '',
+          tipoTrabajo: offer.tipoTrabajo || 'REMOTO',
+          tipoContrato: offer.tipoContrato || 'TIEMPO_COMPLETO',
+          nivelExperiencia: offer.nivelExperiencia || 'ESTUDIANTE',
+          salarioFormateado: offer.salarioFormateado || '',
+          tiempoPublicacion: offer.tiempoPublicacion || '',
+          areaTrabajo: offer.areaTrabajo || '',
+          salarioMinimo: salarioMin,
+          salarioMaximo: salarioMax,
+          moneda: moneda || 'USD',
+          aplicacionRapida: offer.aplicacionRapida ?? true,
+          permiteAplicacionExterna: offer.permiteAplicacionExterna ?? false,
+        };
+      });
+      setJobOffers(offers);
+    } catch (err) {
+      setError((err as Error).message || 'Error al cargar las ofertas');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchJobOfferForEdit = async (jobId: number) => {
+    try {
+      const response = await getJobOfferDetails(jobId);
+      console.log('Raw job offer details response:', JSON.stringify(response, null, 2));
+      
       // Parsear salarios desde salarioFormateado si están en 0
-      let salarioMin = Number(offer.salarioMinimo) || 0;
-      let salarioMax = Number(offer.salarioMaximo) || 0;
+      let salarioMin = Number(response.salarioMinimo) || 0;
+      let salarioMax = Number(response.salarioMaximo) || 0;
       
       // Si los salarios son 0 pero hay salarioFormateado, intentar parsearlo
-      if ((salarioMin === 0 || salarioMax === 0) && offer.salarioFormateado) {
-        const salarios = offer.salarioFormateado.match(/\d+/g);
+      if ((salarioMin === 0 || salarioMax === 0) && response.salarioFormateado) {
+        const salarios = response.salarioFormateado.match(/\d+/g);
         if (salarios && salarios.length >= 2) {
           salarioMin = parseInt(salarios[0]) || 0;
           salarioMax = parseInt(salarios[1]) || 0;
@@ -297,92 +351,37 @@ const JobOffers = () => {
       }
 
       // Determinar la moneda: prioridad moneda > monedaSimbolo > salarioFormateado
-      let moneda = offer.moneda;
-      if (!moneda && offer.monedaSimbolo) {
-        moneda = extractMonedaFromSimbolo(offer.monedaSimbolo);
+      let moneda = response.moneda;
+      if (!moneda && response.monedaSimbolo) {
+        moneda = extractMonedaFromSimbolo(response.monedaSimbolo);
       }
-      if (!moneda && offer.salarioFormateado) {
-        moneda = extractMonedaFromFormateado(offer.salarioFormateado);
+      if (!moneda && response.salarioFormateado) {
+        moneda = extractMonedaFromFormateado(response.salarioFormateado);
       }
 
-      return {
-        id: offer.id,
-        titulo: offer.titulo || '',
-        descripcion: offer.descripcion || '',
-        ubicacion: offer.ubicacion || '',
-        empresaNombre: offer.empresaNombre || '',
-        tipoTrabajo: offer.tipoTrabajo || 'REMOTO',
-        tipoContrato: offer.tipoContrato || 'TIEMPO_COMPLETO',
-        nivelExperiencia: offer.nivelExperiencia || 'ESTUDIANTE',
-        salarioFormateado: offer.salarioFormateado || '',
-        tiempoPublicacion: offer.tiempoPublicacion || '',
-        areaTrabajo: offer.areaTrabajo || '',
+      setFormData({
+        id: response.id,
+        titulo: response.titulo || '',
+        descripcion: response.descripcion || '',
+        ubicacion: response.ubicacion || '',
+        tipoTrabajo: mapTipoTrabajoToEnum(response.tipoTrabajo),
+        tipoContrato: mapTipoContratoToEnum(response.tipoContrato),
+        nivelExperiencia: mapNivelExperienciaToEnum(response.nivelExperiencia),
+        areaTrabajo: response.areaTrabajo || '',
         salarioMinimo: salarioMin,
         salarioMaximo: salarioMax,
-        moneda: moneda || 'USD',
-        aplicacionRapida: offer.aplicacionRapida ?? true,
-        permiteAplicacionExterna: offer.permiteAplicacionExterna ?? false,
-      };
-    });
-    setJobOffers(offers);
-  } catch (err) {
-    setError((err as Error).message || 'Error al cargar las ofertas');
-  } finally {
-    setLoading(false);
-  }
-};
-
-// REEMPLAZAR la función fetchJobOfferForEdit existente con esta versión:
-const fetchJobOfferForEdit = async (jobId: number) => {
-  try {
-    const response = await getJobOfferDetails(jobId);
-    console.log('Raw job offer details response:', JSON.stringify(response, null, 2));
-    
-    // Parsear salarios desde salarioFormateado si están en 0
-    let salarioMin = Number(response.salarioMinimo) || 0;
-    let salarioMax = Number(response.salarioMaximo) || 0;
-    
-    // Si los salarios son 0 pero hay salarioFormateado, intentar parsearlo
-    if ((salarioMin === 0 || salarioMax === 0) && response.salarioFormateado) {
-      const salarios = response.salarioFormateado.match(/\d+/g);
-      if (salarios && salarios.length >= 2) {
-        salarioMin = parseInt(salarios[0]) || 0;
-        salarioMax = parseInt(salarios[1]) || 0;
-      }
+        moneda: mapMonedaToEnum(moneda),
+        aplicacionRapida: response.aplicacionRapida ?? true,
+        permiteAplicacionExterna: response.permiteAplicacionExterna ?? false,
+      });
+      setIsEditing(true);
+      setEditingOfferId(jobId);
+      setModalVisible(true);
+    } catch (err) {
+      setError((err as Error).message || 'Error al cargar los detalles de la oferta para edición');
+      Alert.alert('Error', (err as Error).message || 'Error al cargar los detalles de la oferta para edición');
     }
-
-    // Determinar la moneda: prioridad moneda > monedaSimbolo > salarioFormateado
-    let moneda = response.moneda;
-    if (!moneda && response.monedaSimbolo) {
-      moneda = extractMonedaFromSimbolo(response.monedaSimbolo);
-    }
-    if (!moneda && response.salarioFormateado) {
-      moneda = extractMonedaFromFormateado(response.salarioFormateado);
-    }
-
-    setFormData({
-      id: response.id,
-      titulo: response.titulo || '',
-      descripcion: response.descripcion || '',
-      ubicacion: response.ubicacion || '',
-      tipoTrabajo: mapTipoTrabajoToEnum(response.tipoTrabajo),
-      tipoContrato: mapTipoContratoToEnum(response.tipoContrato),
-      nivelExperiencia: mapNivelExperienciaToEnum(response.nivelExperiencia),
-      areaTrabajo: response.areaTrabajo || '',
-      salarioMinimo: salarioMin,
-      salarioMaximo: salarioMax,
-      moneda: mapMonedaToEnum(moneda),
-      aplicacionRapida: response.aplicacionRapida ?? true,
-      permiteAplicacionExterna: response.permiteAplicacionExterna ?? false,
-    });
-    setIsEditing(true);
-    setEditingOfferId(jobId);
-    setModalVisible(true);
-  } catch (err) {
-    setError((err as Error).message || 'Error al cargar los detalles de la oferta para edición');
-    Alert.alert('Error', (err as Error).message || 'Error al cargar los detalles de la oferta para edición');
-  }
-};
+  };
 
   const openCreateModal = () => {
     setIsEditing(false);
@@ -392,26 +391,26 @@ const fetchJobOfferForEdit = async (jobId: number) => {
   };
 
   const openEditModal = (offer: JobOffer) => {
-  console.log('Opening edit modal with offer:', JSON.stringify(offer, null, 2));
-  setIsEditing(true);
-  setEditingOfferId(offer.id);
-  setFormData({
-    id: offer.id,
-    titulo: offer.titulo || '',
-    descripcion: offer.descripcion || '',
-    ubicacion: offer.ubicacion || '',
-    tipoTrabajo: mapTipoTrabajoToEnum(offer.tipoTrabajo),
-    tipoContrato: mapTipoContratoToEnum(offer.tipoContrato),
-    nivelExperiencia: mapNivelExperienciaToEnum(offer.nivelExperiencia),
-    areaTrabajo: offer.areaTrabajo || '',
-    salarioMinimo: Number(offer.salarioMinimo) || 0,
-    salarioMaximo: Number(offer.salarioMaximo) || 0,
-    moneda: mapMonedaToEnum(offer.moneda), // Ya debería tener la moneda correcta
-    aplicacionRapida: offer.aplicacionRapida ?? true,
-    permiteAplicacionExterna: offer.permiteAplicacionExterna ?? false,
-  });
-  setModalVisible(true);
-};
+    console.log('Opening edit modal with offer:', JSON.stringify(offer, null, 2));
+    setIsEditing(true);
+    setEditingOfferId(offer.id);
+    setFormData({
+      id: offer.id,
+      titulo: offer.titulo || '',
+      descripcion: offer.descripcion || '',
+      ubicacion: offer.ubicacion || '',
+      tipoTrabajo: mapTipoTrabajoToEnum(offer.tipoTrabajo),
+      tipoContrato: mapTipoContratoToEnum(offer.tipoContrato),
+      nivelExperiencia: mapNivelExperienciaToEnum(offer.nivelExperiencia),
+      areaTrabajo: offer.areaTrabajo || '',
+      salarioMinimo: Number(offer.salarioMinimo) || 0,
+      salarioMaximo: Number(offer.salarioMaximo) || 0,
+      moneda: mapMonedaToEnum(offer.moneda),
+      aplicacionRapida: offer.aplicacionRapida ?? true,
+      permiteAplicacionExterna: offer.permiteAplicacionExterna ?? false,
+    });
+    setModalVisible(true);
+  };
 
   const closeModal = () => {
     setModalVisible(false);
@@ -547,13 +546,6 @@ const fetchJobOfferForEdit = async (jobId: number) => {
           jobOffers.map((job) => (
             <View key={job.id} className="mb-4">
               <JobOfferComponent job={job} />
-              <TouchableOpacity
-                onPress={() => openEditModal(job)}
-                className="bg-blue-500 rounded-full px-4 py-2 mx-4 mb-2 flex-row items-center justify-center"
-              >
-                <Icon name="edit" size={20} color="white" />
-                <Text className="text-white font-poppins-semibold text-sm ml-1">Editar</Text>
-              </TouchableOpacity>
             </View>
           ))
         ) : (
