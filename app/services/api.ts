@@ -293,4 +293,22 @@ export const createJobOffer = async (data: CreateJobOfferPayload) => {
   }
 };
 
+export const getCompanyId = async () => {
+  try {
+    const response = await api.get('/api/perfiles/empresa/id');
+    return response.data; 
+  } catch (error) {
+    throw new Error('Error al obtener el ID de la empresa: ' + (error as Error).message);
+  }
+}
+
+export const getJobOffersByCompany = async (empresaId: number) => {
+  try {
+    const response = await api.get(`/ofertas/empresa/${empresaId}`);
+    return response.data;
+  }  catch (error) {
+    throw new Error('Error al obtener las ofertas de la empresa: ' + (error as Error).message);
+  }
+}
+
 export default api;

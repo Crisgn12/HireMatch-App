@@ -1,9 +1,9 @@
 import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Alert, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { createJobOffer } from '../services/api';
+import { createJobOffer, getCompanyId, getJobOffersByCompany } from '../services/api';
 
 // Interfaz para los datos del formulario
 interface JobOfferFormData {
@@ -17,6 +17,40 @@ interface JobOfferFormData {
   salarioMaximo: number;
   moneda: 'USD' | 'CRC' | 'EUR' | 'MXN' | 'CAD';
 }
+
+// Interfaz para los datos de una oferta laboral
+interface JobOffer {
+  id: number;
+  titulo: string;
+  descripcion: string;
+  ubicacion: string;
+  empresaNombre: string;
+  tipoTrabajo: string;
+  nivelExperiencia: string;
+  salarioFormateado: string;
+  tiempoPublicacion: string;
+}
+
+const JobOfferComponent = ({ job }: { job: JobOffer }) => {
+  const router = useRouter();
+
+  return (
+    <TouchableOpacity
+      onPress={() => router.push(`/jobDetails/${job.id}`)} // Simulación de navegación a detalles
+      className="bg-white rounded-lg p-4 mb-4 shadow-md border border-gray-200"
+    >
+      <Text className="text-lg font-poppins-semibold text-gray-800">{job.titulo}</Text>
+      <Text className="text-sm text-gray-600 mt-1">{job.empresaNombre}</Text>
+      <View className="flex-row flex-wrap mt-2">
+        <Text className="text-sm text-gray-500 mr-2">{job.ubicacion}</Text>
+        <Text className="text-sm text-gray-500 mr-2">• {job.tipoTrabajo}</Text>
+        <Text className="text-sm text-gray-500">• {job.nivelExperiencia}</Text>
+      </View>
+      <Text className="text-sm text-gray-700 mt-2">{job.salarioFormateado}</Text>
+      <Text className="text-xs text-gray-400 mt-1">{job.tiempoPublicacion}</Text>
+    </TouchableOpacity>
+  );
+};
 
 const JobOffers = () => {
   const router = useRouter();
@@ -33,6 +67,34 @@ const JobOffers = () => {
     moneda: 'USD',
   });
   const [error, setError] = useState<string | null>(null);
+  const [jobOffers, setJobOffers] = useState<JobOffer[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchJobOffers = async () => {
+      try {
+        const companyId = await getCompanyId();
+        const response = await getJobOffersByCompany(companyId);
+        const offers = response.content.map((offer: any) => ({
+          id: offer.id,
+          titulo: offer.titulo,
+          descripcion: offer.descripcion,
+          ubicacion: offer.ubicacion,
+          empresaNombre: offer.empresaNombre,
+          tipoTrabajo: offer.tipoTrabajo,
+          nivelExperiencia: offer.nivelExperiencia,
+          salarioFormateado: offer.salarioFormateado,
+          tiempoPublicacion: offer.tiempoPublicacion,
+        }));
+        setJobOffers(offers);
+      } catch (err) {
+        setError((err as Error).message || 'Error al cargar las ofertas');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobOffers();
+  }, []);
 
   const openModal = () => {
     setModalVisible(true);
@@ -65,6 +127,20 @@ const JobOffers = () => {
         ],
         { cancelable: false }
       );
+      // Recargar ofertas después de crear una nueva
+      const companyId = await getCompanyId();
+      const responseOffers = await getJobOffersByCompany(companyId);
+      setJobOffers(responseOffers.content.map((offer: any) => ({
+        id: offer.id,
+        titulo: offer.titulo,
+        descripcion: offer.descripcion,
+        ubicacion: offer.ubicacion,
+        empresaNombre: offer.empresaNombre,
+        tipoTrabajo: offer.tipoTrabajo,
+        nivelExperiencia: offer.nivelExperiencia,
+        salarioFormateado: offer.salarioFormateado,
+        tiempoPublicacion: offer.tiempoPublicacion,
+      })));
     } catch (err) {
       const errorMessage = (err as Error).message || 'Error al crear la oferta';
       setError(errorMessage);
@@ -77,16 +153,30 @@ const JobOffers = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-gray-50">
+        <Text className="text-gray-700 font-poppins">Cargando ofertas...</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView className="flex-1 bg-gray-50">
       <View className="mt-6 px-6">
         <TouchableOpacity
           onPress={openModal}
-          className="mt-4 bg-primary rounded-full px-6 py-2 shadow-md flex-row items-center justify-center"
+          className="mt-4 bg-primary rounded-full px-6 py-2 shadow-md flex-row items-center justify-center mb-10"
         >
           <Icon name="add" size={25} color="white" />
           <Text className="text-white font-poppins-semibold text-base">Nueva Oferta</Text>
         </TouchableOpacity>
+
+        {jobOffers.length > 0 ? (
+          jobOffers.map((job) => <JobOfferComponent key={job.id} job={job} />)
+        ) : (
+          <Text className="text-gray-500 text-center mt-4">No hay ofertas disponibles.</Text>
+        )}
 
         <Modal
           animationType="slide"
