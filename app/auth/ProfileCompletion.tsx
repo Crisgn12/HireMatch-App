@@ -1,8 +1,40 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Image, Keyboard, Pressable, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
+import { Alert, Image, Keyboard, Pressable, ScrollView, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import { createProfile, updateUserActivo, uploadProfilePhoto } from '../services/api';
+
+// Lista de sugerencias para habilidades (client-side)
+const habilidadesSugeridas = [
+  'Comunicación',
+  'Trabajo en equipo',
+  'Resolución de problemas',
+  'Gestión de proyectos',
+  'Programación',
+  'Diseño gráfico',
+  'Atención al cliente',
+  'Ventas',
+  'Marketing digital',
+  'Análisis de datos',
+  'Gestión del tiempo',
+  'Liderazgo',
+];
+
+// Lista de sugerencias para experiencia (client-side)
+const experienciasSugeridas = [
+  'Desarrollador de Software',
+  'Atención al Cliente',
+  'Gestión de Proyectos',
+  'Diseñador Gráfico',
+  'Vendedor',
+  'Analista de Datos',
+  'Asistente Administrativo',
+  'Marketing',
+  'Contador',
+  'Recursos Humanos',
+  'Soporte Técnico',
+  'Docente',
+];
 
 const ProfileCompletion = () => {
   const router = useRouter();
@@ -25,6 +57,20 @@ const ProfileCompletion = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Función para agregar sugerencias a habilidades o experiencia
+  const addSuggestion = (field: 'habilidades' | 'experiencia', suggestion: string) => {
+    const currentValue = formData[field];
+    const maxLength = field === 'habilidades' ? 500 : 2000;
+    let newValue = currentValue ? `${currentValue}, ${suggestion}` : suggestion;
+
+    // Respetar el límite de caracteres
+    if (newValue.length > maxLength) {
+      newValue = newValue.slice(0, maxLength);
+    }
+
+    setFormData({ ...formData, [field]: newValue });
+  };
 
   // Client-side validation
   const validateStep = () => {
@@ -190,206 +236,234 @@ const ProfileCompletion = () => {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View className="mt-24 justify-center items-center flex-col">
-        <View className="justify-center items-center gap-3 mb-12">
-          <Image
-            source={require('../../assets/images/HireMatch-Logo.png')}
-            className="size-40"
-          />
-          <Text
-            style={{ fontFamily: 'Poppins-Regular' }}
-            className="text-3xl text-primary font-bold"
-          >
-            Completar Perfil
-          </Text>
-          <Text className="text-gray-700 text-center">
-            {step === 1 ? 'Información básica' : step === 2 ? 'Experiencia y educación' : 'Habilidades y foto'}
-          </Text>
-        </View>
+      <ScrollView className="flex-1">
+        <View className="mt-24 justify-center items-center flex-col">
+          <View className="justify-center items-center gap-3 mb-12">
+            <Image
+              source={require('../../assets/images/HireMatch-Logo.png')}
+              className="size-40"
+            />
+            <Text
+              style={{ fontFamily: 'Poppins-Regular' }}
+              className="text-3xl text-primary font-bold"
+            >
+              Completar Perfil
+            </Text>
+            <Text className="text-gray-700 text-center">
+              {step === 1 ? 'Información básica' : step === 2 ? 'Experiencia y educación' : 'Habilidades y foto'}
+            </Text>
+          </View>
 
-        {renderStepIndicator()}
+          {renderStepIndicator()}
 
-        <View className="gap-5 px-14 w-full">
-          {step === 1 && (
-            <>
-              <View className="flex-row justify-between mb-4">
-                <Pressable
-                  onPress={() => setFormData({ ...formData, tipo_perfil: 'postulante', nombre_empresa: '' })}
-                  className={`flex-1 p-3 rounded-xl mr-2 ${formData.tipo_perfil === 'postulante' ? 'bg-primary text-white' : 'bg-gray-200'}`}
-                >
-                  <Text className={`text-center font-semibold ${formData.tipo_perfil === 'postulante' ? 'text-white' : 'text-gray-700'}`}>
-                    Postulante
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => setFormData({ ...formData, tipo_perfil: 'empresa' })}
-                  className={`flex-1 p-3 rounded-xl ml-2 ${formData.tipo_perfil === 'empresa' ? 'bg-primary text-white' : 'bg-gray-200'}`}
-                >
-                  <Text className={`text-center font-semibold ${formData.tipo_perfil === 'empresa' ? 'text-white' : 'text-gray-700'}`}>
-                    Empresa
-                  </Text>
-                </Pressable>
-              </View>
-              {formData.tipo_perfil === 'empresa' && (
+          <View className="gap-5 px-14 w-full">
+            {step === 1 && (
+              <>
+                <View className="flex-row justify-between mb-4">
+                  <Pressable
+                    onPress={() => setFormData({ ...formData, tipo_perfil: 'postulante', nombre_empresa: '' })}
+                    className={`flex-1 p-3 rounded-xl mr-2 ${formData.tipo_perfil === 'postulante' ? 'bg-primary text-white' : 'bg-gray-200'}`}
+                  >
+                    <Text className={`text-center font-semibold ${formData.tipo_perfil === 'postulante' ? 'text-white' : 'text-gray-700'}`}>
+                      Postulante
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setFormData({ ...formData, tipo_perfil: 'empresa' })}
+                    className={`flex-1 p-3 rounded-xl ml-2 ${formData.tipo_perfil === 'empresa' ? 'bg-primary text-white' : 'bg-gray-200'}`}
+                  >
+                    <Text className={`text-center font-semibold ${formData.tipo_perfil === 'empresa' ? 'text-white' : 'text-gray-700'}`}>
+                      Empresa
+                    </Text>
+                  </Pressable>
+                </View>
+                {formData.tipo_perfil === 'empresa' && (
+                  <TextInput
+                    className="border border-gray-300 rounded-xl p-3 w-full mb-4"
+                    placeholder="Nombre de la empresa (máx. 150 caracteres)"
+                    value={formData.nombre_empresa}
+                    onChangeText={(text) => setFormData({ ...formData, nombre_empresa: text.slice(0, 150) })}
+                    editable={!loading}
+                    returnKeyType="done"
+                    onSubmitEditing={handleSubmitEditing}
+                  />
+                )}
                 <TextInput
                   className="border border-gray-300 rounded-xl p-3 w-full mb-4"
-                  placeholder="Nombre de la empresa (máx. 150 caracteres)"
-                  value={formData.nombre_empresa}
-                  onChangeText={(text) => setFormData({ ...formData, nombre_empresa: text.slice(0, 150) })}
+                  placeholder="Descripción (máx. 1000 caracteres)"
+                  value={formData.descripcion}
+                  onChangeText={(text) => setFormData({ ...formData, descripcion: text.slice(0, 1000) })}
+                  multiline
                   editable={!loading}
                   returnKeyType="done"
                   onSubmitEditing={handleSubmitEditing}
                 />
-              )}
-              <TextInput
-                className="border border-gray-300 rounded-xl p-3 w-full mb-4"
-                placeholder="Descripción (máx. 1000 caracteres)"
-                value={formData.descripcion}
-                onChangeText={(text) => setFormData({ ...formData, descripcion: text.slice(0, 1000) })}
-                multiline
-                editable={!loading}
-                returnKeyType="done"
-                onSubmitEditing={handleSubmitEditing}
-              />
-              <TextInput
-                className="border border-gray-300 rounded-xl p-3 w-full mb-4"
-                placeholder="Ubicación (máx. 255 caracteres)"
-                value={formData.ubicacion}
-                onChangeText={(text) => setFormData({ ...formData, ubicacion: text.slice(0, 255) })}
-                editable={!loading}
-                returnKeyType="done"
-                onSubmitEditing={handleSubmitEditing}
-              />
-              <TextInput
-                className="border border-gray-300 rounded-xl p-3 w-full mb-4"
-                placeholder="Teléfono (máx. 20 caracteres)"
-                value={formData.telefono}
-                onChangeText={(text) => setFormData({ ...formData, telefono: text.slice(0, 20) })}
-                keyboardType="phone-pad"
-                editable={!loading}
-                returnKeyType="done"
-                onSubmitEditing={handleSubmitEditing}
-              />
-              <TextInput
-                className="border border-gray-300 rounded-xl p-3 w-full mb-4"
-                placeholder="Sitio web (máx. 255 caracteres)"
-                value={formData.sitio_web}
-                onChangeText={(text) => setFormData({ ...formData, sitio_web: text.slice(0, 255) })}
-                keyboardType="url"
-                editable={!loading}
-                returnKeyType="done"
-                onSubmitEditing={handleSubmitEditing}
-              />
-            </>
-          )}
-
-          {step === 2 && formData.tipo_perfil === 'postulante' && (
-            <>
-              <TextInput
-                className="border border-gray-300 rounded-xl p-3 w-full mb-4"
-                placeholder="Experiencia laboral (máx. 2000 caracteres)"
-                value={formData.experiencia}
-                onChangeText={(text) => setFormData({ ...formData, experiencia: text.slice(0, 2000) })}
-                multiline
-                numberOfLines={4}
-                editable={!loading}
-                returnKeyType="done"
-                onSubmitEditing={handleSubmitEditing}
-              />
-              <TextInput
-                className="border border-gray-300 rounded-xl p-3 w-full mb-4"
-                placeholder="Educación (máx. 2000 caracteres)"
-                value={formData.educacion}
-                onChangeText={(text) => setFormData({ ...formData, educacion: text.slice(0, 2000) })}
-                multiline
-                numberOfLines={4}
-                editable={!loading}
-                returnKeyType="done"
-                onSubmitEditing={handleSubmitEditing}
-              />
-              <TextInput
-                className="border border-gray-300 rounded-xl p-3 w-full mb-4"
-                placeholder="Certificaciones (máx. 2000 caracteres)"
-                value={formData.certificaciones}
-                onChangeText={(text) => setFormData({ ...formData, certificaciones: text.slice(0, 2000) })}
-                multiline
-                numberOfLines={4}
-                editable={!loading}
-                returnKeyType="done"
-                onSubmitEditing={handleSubmitEditing}
-              />
-            </>
-          )}
-
-          {step === 3 && (
-            <>
-              <TextInput
-                className="border border-gray-300 rounded-xl p-3 w-full mb-4"
-                placeholder="Habilidades (máx. 500 caracteres)"
-                value={formData.habilidades}
-                onChangeText={(text) => setFormData({ ...formData, habilidades: text.slice(0, 500) })}
-                multiline
-                editable={!loading}
-                returnKeyType="done"
-                onSubmitEditing={handleSubmitEditing}
-              />
-              <TextInput
-                className="border border-gray-300 rounded-xl p-3 w-full mb-4"
-                placeholder="Intereses (máx. 500 caracteres)"
-                value={formData.intereses}
-                onChangeText={(text) => setFormData({ ...formData, intereses: text.slice(0, 500) })}
-                multiline
-                numberOfLines={4}
-                editable={!loading}
-                returnKeyType="done"
-                onSubmitEditing={handleSubmitEditing}
-              />
-              <Pressable onPress={pickImage} disabled={loading}>
-                <Text
-                  className={`text-center text-white bg-primary p-3 rounded-xl font-semibold mb-4 ${
-                    loading ? 'opacity-50' : ''
-                  }`}
-                >
-                  {formData.foto ? 'Cambiar Foto' : 'Seleccionar Foto de Perfil'}
-                </Text>
-              </Pressable>
-              {formData.foto && (
-                <Image
-                  source={{ uri: formData.foto.uri }}
-                  className="w-24 h-24 rounded-full mx-auto"
+                <TextInput
+                  className="border border-gray-300 rounded-xl p-3 w-full mb-4"
+                  placeholder="Ubicación (máx. 255 caracteres)"
+                  value={formData.ubicacion}
+                  onChangeText={(text) => setFormData({ ...formData, ubicacion: text.slice(0, 255) })}
+                  editable={!loading}
+                  returnKeyType="done"
+                  onSubmitEditing={handleSubmitEditing}
                 />
+                <TextInput
+                  className="border border-gray-300 rounded-xl p-3 w-full mb-4"
+                  placeholder="Teléfono (máx. 20 caracteres)"
+                  value={formData.telefono}
+                  onChangeText={(text) => setFormData({ ...formData, telefono: text.slice(0, 20) })}
+                  keyboardType="phone-pad"
+                  editable={!loading}
+                  returnKeyType="done"
+                  onSubmitEditing={handleSubmitEditing}
+                />
+                <TextInput
+                  className="border border-gray-300 rounded-xl p-3 w-full mb-4"
+                  placeholder="Sitio web (máx. 255 caracteres)"
+                  value={formData.sitio_web}
+                  onChangeText={(text) => setFormData({ ...formData, sitio_web: text.slice(0, 255) })}
+                  keyboardType="url"
+                  editable={!loading}
+                  returnKeyType="done"
+                  onSubmitEditing={handleSubmitEditing}
+                />
+              </>
+            )}
+
+            {step === 2 && formData.tipo_perfil === 'postulante' && (
+              <>
+                <View>
+                  <TextInput
+                    className="border border-gray-300 rounded-xl p-3 w-full mb-2"
+                    placeholder="Experiencia laboral (máx. 2000 caracteres)"
+                    value={formData.experiencia}
+                    onChangeText={(text) => setFormData({ ...formData, experiencia: text.slice(0, 2000) })}
+                    multiline
+                    numberOfLines={4}
+                    editable={!loading}
+                    returnKeyType="done"
+                    onSubmitEditing={handleSubmitEditing}
+                  />
+                  <View className="flex-row flex-wrap gap-2 mb-4">
+                    {experienciasSugeridas.map((suggestion, index) => (
+                      <Pressable
+                        key={index}
+                        onPress={() => addSuggestion('experiencia', suggestion)}
+                        className="bg-gray-200 rounded-full px-3 py-1"
+                      >
+                        <Text className="text-gray-700 text-sm font-poppins">{suggestion}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+                <TextInput
+                  className="border border-gray-300 rounded-xl p-3 w-full mb-4"
+                  placeholder="Educación (máx. 2000 caracteres)"
+                  value={formData.educacion}
+                  onChangeText={(text) => setFormData({ ...formData, educacion: text.slice(0, 2000) })}
+                  multiline
+                  numberOfLines={4}
+                  editable={!loading}
+                  returnKeyType="done"
+                  onSubmitEditing={handleSubmitEditing}
+                />
+                <TextInput
+                  className="border border-gray-300 rounded-xl p-3 w-full mb-4"
+                  placeholder="Certificaciones (máx. 2000 caracteres)"
+                  value={formData.certificaciones}
+                  onChangeText={(text) => setFormData({ ...formData, certificaciones: text.slice(0, 2000) })}
+                  multiline
+                  numberOfLines={4}
+                  editable={!loading}
+                  returnKeyType="done"
+                  onSubmitEditing={handleSubmitEditing}
+                />
+              </>
+            )}
+
+            {step === 3 && (
+              <>
+                <View>
+                  <TextInput
+                    className="border border-gray-300 rounded-xl p-3 w-full mb-2"
+                    placeholder="Habilidades (máx. 500 caracteres)"
+                    value={formData.habilidades}
+                    onChangeText={(text) => setFormData({ ...formData, habilidades: text.slice(0, 500) })}
+                    multiline
+                    editable={!loading}
+                    returnKeyType="done"
+                    onSubmitEditing={handleSubmitEditing}
+                  />
+                  <View className="flex-row flex-wrap gap-2 mb-4">
+                    {habilidadesSugeridas.map((suggestion, index) => (
+                      <Pressable
+                        key={index}
+                        onPress={() => addSuggestion('habilidades', suggestion)}
+                        className="bg-gray-200 rounded-full px-3 py-1"
+                      >
+                        <Text className="text-gray-700 text-sm font-poppins">{suggestion}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+                <TextInput
+                  className="border border-gray-300 rounded-xl p-3 w-full mb-4"
+                  placeholder="Intereses (máx. 500 caracteres)"
+                  value={formData.intereses}
+                  onChangeText={(text) => setFormData({ ...formData, intereses: text.slice(0, 500) })}
+                  multiline
+                  numberOfLines={4}
+                  editable={!loading}
+                  returnKeyType="done"
+                  onSubmitEditing={handleSubmitEditing}
+                />
+                <Pressable onPress={pickImage} disabled={loading}>
+                  <Text
+                    className={`text-center text-white bg-primary p-3 rounded-xl font-semibold mb-4 ${
+                      loading ? 'opacity-50' : ''
+                    }`}
+                  >
+                    {formData.foto ? 'Cambiar Foto' : 'Seleccionar Foto de Perfil'}
+                  </Text>
+                </Pressable>
+                {formData.foto && (
+                  <Image
+                    source={{ uri: formData.foto.uri }}
+                    className="w-24 h-24 rounded-full mx-auto"
+                  />
+                )}
+              </>
+            )}
+
+            {error ? (
+              <Text className="text-red-500 text-center">{error}</Text>
+            ) : null}
+
+            <View className="flex-row justify-between">
+              {step > 1 && (
+                <Pressable onPress={handleBack} disabled={loading}>
+                  <Text
+                    className={`text-center text-primary p-3 rounded-xl font-semibold border border-primary ${
+                      loading ? 'opacity-50' : ''
+                    }`}
+                  >
+                    Anterior
+                  </Text>
+                </Pressable>
               )}
-            </>
-          )}
-
-          {error ? (
-            <Text className="text-red-500 text-center">{error}</Text>
-          ) : null}
-
-          <View className="flex-row justify-between">
-            {step > 1 && (
-              <Pressable onPress={handleBack} disabled={loading}>
+              <Pressable onPress={handleNext} disabled={loading}>
                 <Text
-                  className={`text-center text-primary p-3 rounded-xl font-semibold border border-primary ${
+                  className={`text-center text-white bg-primary p-3 rounded-xl font-semibold ${
                     loading ? 'opacity-50' : ''
                   }`}
                 >
-                  Anterior
+                  {loading ? 'Guardando...' : step === 3 ? 'Finalizar' : 'Siguiente'}
                 </Text>
               </Pressable>
-            )}
-            <Pressable onPress={handleNext} disabled={loading}>
-              <Text
-                className={`text-center text-white bg-primary p-3 rounded-xl font-semibold ${
-                  loading ? 'opacity-50' : ''
-                }`}
-              >
-                {loading ? 'Guardando...' : step === 3 ? 'Finalizar' : 'Siguiente'}
-              </Text>
-            </Pressable>
+            </View>
           </View>
         </View>
-      </View>
+      </ScrollView>
     </TouchableWithoutFeedback>
   );
 };
