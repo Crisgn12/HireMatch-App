@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://192.168.0.8:8080';
+const API_BASE_URL = 'http://192.168.100.101:8080';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -376,5 +376,23 @@ export const getJobOfferDetails = async (ofertaId: number) => {
     throw new Error('Error al obtener los detalles de la oferta: ' + (error as Error).message);
   }
 };
+
+export const getJobOffers = async () => {
+  try {
+    const response = await api.get('/ofertas/publico');
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al obtener las ofertas de trabajo: ' + (error as Error).message);
+  }
+}
+
+export const likeJobOffer = async (ofertaId: number) => {
+  try {
+    const response = await api.post(`/api/likes/oferta/${ofertaId}`);
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al dar like a la oferta: ' + (error as Error).message);
+  }
+}
 
 export default api;

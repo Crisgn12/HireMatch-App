@@ -1,35 +1,40 @@
 import { useNavigation, useRouter } from 'expo-router';
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { Dimensions, Pressable, Text, View } from 'react-native';
+import Swiper from 'react-native-deck-swiper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import JobOfferCard from '../components/JobOfferCard';
+import { getJobOffers, likeJobOffer } from '../services/api';
 
 const { width, height } = Dimensions.get('window');
 
-// Mock data for testing (single job)
-const mockJob = {
-  id: 1,
-  titulo: 'Desarrollador Full Stack',
-  empresaNombre: 'Tech Corp',
-  ubicacion: 'San José, Costa Rica',
-  tipoTrabajo: 'REMOTO',
-  tipoContrato: 'TIEMPO_COMPLETO',
-  nivelExperiencia: 'SEMI_SENIOR',
-  salarioFormateado: '$2000 - $3000',
-  tiempoPublicacion: 'Hace 3 días',
-  etiquetas: ['startup', 'tecnología', 'crecimiento'],
-  urgente: true,
-  destacada: false,
-  mostrarSalario: true,
-  areaTrabajo: 'Desarrollo',
-};
+// Interfaz para una oferta de trabajo (basada en tu API)
+interface JobOffer {
+  id: number;
+  titulo: string;
+  empresaNombre: string;
+  ubicacion: string;
+  tipoTrabajo: string;
+  tipoContrato: string;
+  nivelExperiencia: string;
+  salarioFormateado: string;
+  tiempoPublicacion: string;
+  etiquetas?: string[];
+  urgente?: boolean;
+  destacada?: boolean;
+  mostrarSalario?: boolean;
+  areaTrabajo?: string;
+}
 
 const Home = () => {
   const router = useRouter();
   const navigation = useNavigation();
   const [likes, setLikes] = useState(5);
   const [superLikes, setSuperLikes] = useState(2);
+  const [jobOffers, setJobOffers] = useState<JobOffer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Configurar el header dinámicamente
   useLayoutEffect(() => {
@@ -137,11 +142,84 @@ const Home = () => {
     });
   }, [navigation, likes, superLikes, router]);
 
+  useEffect(() => {
+    const fetchJobOffers = async () => {
+      setLoading(true);
+      try {
+        const response = await getJobOffers();
+        setJobOffers(response.content || []); // Asumiendo que la respuesta tiene 'content' como array de ofertas
+      } catch (err) {
+        setError((err as Error).message || 'Error al cargar las ofertas');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobOffers();
+  }, []);
+
+  const handleSwipedRight = async (index: number) => {
+    const job = jobOffers[index];
+    try {
+      await likeJobOffer(job.id);
+      // Remover la oferta del array
+      setJobOffers(prevOffers => prevOffers.filter((_, i) => i !== index));
+      // Actualizar likes
+      setLikes(prev => prev - 1);
+    } catch (error) {
+      console.error('Error al dar like:', error);
+    }
+  };
+
+  const handleSwipedLeft = (index: number) => {
+    const job = jobOffers[index];
+    console.log('Oferta descartada:', job.id);
+    // Remover la oferta del array
+    setJobOffers(prevOffers => prevOffers.filter((_, i) => i !== index));
+  };
+
+  const handleLike = () => {
+    if (likes > 0) {
+      setLikes(prev => prev - 1);
+      // Aquí podrías agregar lógica para like manual si lo deseas
+    }
+  };
+
+  const handleSuperLike = () => {
+    if (superLikes > 0) {
+      setSuperLikes(prev => prev - 1);
+      // Aquí podrías agregar lógica para super like manual si lo deseas
+    }
+  };
+
+  const handleReject = () => {
+    if (jobOffers.length > 0) {
+      setJobOffers(prevOffers => prevOffers.slice(1));
+    }
+  };
+
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-gray-50">
+        <Icon name="autorenew" size={40} color="#3B82F6" />
+        <Text className="text-gray-700 text-lg font-poppins mt-2">Cargando ofertas...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View className="flex-1 justify-center items-center bg-gray-50">
+        <Text className="text-red-500 font-poppins">{error}</Text>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={{ 
       flex: 1, 
       backgroundColor: '#F8FAFC' 
-    }}>
+    }}
+      edges={['right', 'left', 'bottom']}>
       {/* Low Balance Warning - Fixed positioning */}
       {(likes === 0 && superLikes === 0) && (
         <View style={{
@@ -204,99 +282,55 @@ const Home = () => {
         </View>
       )}
 
-      {/* Main Card Area - Fixed container */}
+      {/* Main Card Area - Centered container */}
       <View style={{ 
-        flex: 1, 
-        alignItems: 'center', 
-        justifyContent: 'center',
+        // flex: 1, 
+        // justifyContent: 'center', 
+        // alignItems: 'center',
         paddingHorizontal: 20,
-        paddingTop: (likes === 0 && superLikes === 0) ? 80 : 20,
-        paddingBottom: 20
       }}>
-        <View style={{ 
-          height: height * 0.60, 
-          width: Math.min(width * 0.90, 400), // Max width constraint
-          maxHeight: 650 // Max height constraint
-        }}>
-          <JobOfferCard job={mockJob} />
-        </View>
-      </View>
-
-      {/* Action Buttons - Fixed positioning and spacing */}
-      <View style={{
-        paddingHorizontal: 24,
-        paddingBottom: 0,
-        paddingTop: 40
-      }}>
-        <View style={{
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          borderRadius: 24,
-          paddingVertical: 20,
-          paddingHorizontal: 16,
-          elevation: 8,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 12,
-          gap: 32 // Fixed spacing between buttons
-        }}>
-          {/* Reject Button */}
-          <Pressable
-            style={{
-              backgroundColor: 'white',
-              borderRadius: 30,
-              padding: 16,
-              borderWidth: 2,
-              borderColor: '#FEE2E2',
-              elevation: 6,
-              shadowOffset: { width: 0, height: 3 },
-              shadowOpacity: 0.2,
-              shadowRadius: 8,
+        {jobOffers.length > 0 ? (
+          <Swiper
+            cards={jobOffers}
+            renderCard={(job) => (
+              <JobOfferCard
+                job={job}
+                likes={likes}
+                superLikes={superLikes}
+                onLike={handleLike}
+                onSuperLike={handleSuperLike}
+                onReject={handleReject}
+              />
+            )}
+            onSwipedRight={handleSwipedRight}
+            onSwipedLeft={handleSwipedLeft}
+            cardIndex={0}
+            backgroundColor="#F8FAFC"
+            stackSize={3}
+            stackSeparation={15}
+            animateCardOpacity
+            animateOverlayLabelsOpacity
+            swipeBackCard
+            overlayLabels={{
+              left: {
+                title: 'Dislike',
+                style: {
+                  label: { backgroundColor: '#EF4444', color: 'white', padding: 10 },
+                  wrapper: { flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start', marginTop: 30, marginLeft: -30 },
+                },
+              },
+              right: {
+                title: 'Like',
+                style: {
+                  label: { backgroundColor: '#10B981', color: 'white', padding: 10 },
+                  wrapper: { flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', marginTop: 30, marginLeft: 30 },
+                },
+              },
             }}
-          >
-            <Icon name="close" size={28} color="#EF4444" />
-          </Pressable>
-
-          {/* Super Like Button */}
-          <Pressable
-            onPress={() => {
-              if (superLikes > 0) setSuperLikes(prev => prev - 1);
-            }}
-            style={{
-              backgroundColor: '#F59E0B',
-              borderRadius: 35,
-              padding: 20,
-              elevation: 10,
-              shadowOffset: { width: 0, height: 5 },
-              shadowOpacity: 0.3,
-              shadowRadius: 12,
-            }}
-          >
-            <Icon name="star" size={32} color="white" />
-          </Pressable>
-
-          {/* Like Button */}
-          <Pressable
-            onPress={() => {
-              if (likes > 0) setLikes(prev => prev - 1);
-            }}
-            style={{
-              backgroundColor: 'white',
-              borderRadius: 30,
-              padding: 16,
-              borderWidth: 2,
-              borderColor: '#D1FAE5',
-              elevation: 6,
-              shadowOffset: { width: 0, height: 3 },
-              shadowOpacity: 0.2,
-              shadowRadius: 8,
-            }}
-          >
-            <Icon name="favorite" size={28} color="#10B981" />
-          </Pressable>
-        </View>
+          />
+        ) : (
+          <Text className="text-gray-500 text-center">No hay ofertas disponibles</Text>
+        )}
       </View>
 
       {/* Achievement/Match Notification Area */}

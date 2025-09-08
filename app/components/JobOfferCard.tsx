@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Pressable, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const { width, height } = Dimensions.get('window');
@@ -23,9 +23,14 @@ interface JobOfferCardProps {
     mostrarSalario?: boolean;
     areaTrabajo?: string;
   };
+  likes: number;
+  superLikes: number;
+  onLike: () => void;
+  onSuperLike: () => void;
+  onReject: () => void;
 }
 
-const JobOfferCard: React.FC<JobOfferCardProps> = ({ job }) => {
+const JobOfferCard: React.FC<JobOfferCardProps> = ({ job, likes, superLikes, onLike, onSuperLike, onReject }) => {
   const router = useRouter();
 
   return (
@@ -33,7 +38,7 @@ const JobOfferCard: React.FC<JobOfferCardProps> = ({ job }) => {
       className="bg-white rounded-3xl shadow-2xl border border-gray-100 relative overflow-hidden"
       style={{
         width: width * 0.9,
-        height: height * 0.58,
+        height: height * 0.70, // Aumentamos la altura para incluir los botones
         elevation: 20,
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.15,
@@ -118,7 +123,7 @@ const JobOfferCard: React.FC<JobOfferCardProps> = ({ job }) => {
           {/* Details Button */}
           <TouchableOpacity
             onPress={() => router.push(`/companyExtraViews/${job.id}`)}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl py-4 flex-row items-center justify-center shadow-lg"
+            className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl py-4 flex-row items-center justify-center shadow-lg mb-6"
             style={{
               elevation: 8,
               shadowOffset: { width: 0, height: 4 },
@@ -129,6 +134,68 @@ const JobOfferCard: React.FC<JobOfferCardProps> = ({ job }) => {
             <Icon name="visibility" size={24} color="black" />
             <Text className="text-black font-poppins-bold text-lg ml-3">Ver Detalles</Text>
           </TouchableOpacity>
+
+          {/* Action Buttons */}
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'space-around',
+            alignItems: 'center',
+            paddingBottom: 20,
+          }}>
+            {/* Reject Button */}
+            <Pressable
+              onPress={onReject}
+              style={{
+                backgroundColor: 'white',
+                borderRadius: 30,
+                padding: 16,
+                borderWidth: 2,
+                borderColor: '#FEE2E2',
+                elevation: 6,
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: 0.2,
+                shadowRadius: 8,
+              }}
+            >
+              <Icon name="close" size={28} color="#EF4444" />
+            </Pressable>
+
+            {/* Super Like Button */}
+            <Pressable
+              onPress={onSuperLike}
+              disabled={superLikes === 0}
+              style={{
+                backgroundColor: superLikes === 0 ? '#D1D5DB' : '#F59E0B',
+                borderRadius: 35,
+                padding: 20,
+                elevation: 10,
+                shadowOffset: { width: 0, height: 5 },
+                shadowOpacity: 0.3,
+                shadowRadius: 12,
+              }}
+            >
+              <Icon name="star" size={32} color={superLikes === 0 ? 'gray' : 'white'} />
+            </Pressable>
+
+            {/* Like Button */}
+            <Pressable
+              onPress={onLike}
+              disabled={likes === 0}
+              style={{
+                backgroundColor: likes === 0 ? '#D1D5DB' : 'white',
+                borderRadius: 30,
+                padding: 16,
+                borderWidth: 2,
+                borderColor: likes === 0 ? '#D1D5DB' : '#D1FAE5',
+                elevation: 6,
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: 0.2,
+                shadowRadius: 8,
+              }}
+            >
+              <Icon name="favorite" size={28} color={likes === 0 ? 'gray' : '#10B981'} />
+            </Pressable>
+          </View>
         </View>
       </View>
 

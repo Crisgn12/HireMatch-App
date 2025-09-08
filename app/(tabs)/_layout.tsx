@@ -17,9 +17,9 @@ export default function TabsLayout() {
           name="home"
           options={{
             title: 'Bienvenido',
-            tabBarLabel: 'Inicio',
+            tabBarLabel: 'Empleos',
             tabBarIcon: ({ color, size }) => (
-              <Icon name="home" size={size} color={color} />
+              <Icon name="cases" size={size} color={color} />
             ),
           }}
         />
