@@ -31,7 +31,7 @@ export default function RootLayout() {
 
   return (
     <Stack
-      initialRouteName="welcome"
+      initialRouteName="splash"
       screenOptions={{ headerShown: false }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
