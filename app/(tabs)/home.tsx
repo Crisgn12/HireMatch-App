@@ -1,5 +1,5 @@
 import { useNavigation, useRouter } from 'expo-router';
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Dimensions, Pressable, Text, View } from 'react-native';
 import Swiper from 'react-native-deck-swiper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,7 +9,6 @@ import { getJobOffers, likeJobOffer } from '../services/api';
 
 const { width, height } = Dimensions.get('window');
 
-// Interfaz para una oferta de trabajo (basada en tu API)
 interface JobOffer {
   id: number;
   titulo: string;
@@ -30,9 +29,11 @@ interface JobOffer {
 const Home = () => {
   const router = useRouter();
   const navigation = useNavigation();
+  const swiperRef = useRef<Swiper<JobOffer>>(null);
   const [likes, setLikes] = useState(5);
   const [superLikes, setSuperLikes] = useState(2);
   const [jobOffers, setJobOffers] = useState<JobOffer[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -147,7 +148,8 @@ const Home = () => {
       setLoading(true);
       try {
         const response = await getJobOffers();
-        setJobOffers(response.content || []); // Asumiendo que la respuesta tiene 'content' como array de ofertas
+        setJobOffers(response.content || []);
+        setCurrentIndex(0); // Reset index when loading new offers
       } catch (err) {
         setError((err as Error).message || 'Error al cargar las ofertas');
       } finally {
@@ -157,44 +159,52 @@ const Home = () => {
     fetchJobOffers();
   }, []);
 
+  // ✅ CORREGIDO: Solo manejamos la lógica del swipe, no modificamos el array
   const handleSwipedRight = async (index: number) => {
     const job = jobOffers[index];
+    if (!job) return; // Verificación de seguridad
+    
     try {
       await likeJobOffer(job.id);
-      // Remover la oferta del array
-      setJobOffers(prevOffers => prevOffers.filter((_, i) => i !== index));
-      // Actualizar likes
-      setLikes(prev => prev - 1);
+      setLikes(prev => Math.max(0, prev - 1)); // Evitar números negativos
+      setCurrentIndex(index + 1);
     } catch (error) {
       console.error('Error al dar like:', error);
     }
   };
 
+  // ✅ CORREGIDO: Solo actualizamos el índice
   const handleSwipedLeft = (index: number) => {
     const job = jobOffers[index];
+    if (!job) return; // Verificación de seguridad
+    
     console.log('Oferta descartada:', job.id);
-    // Remover la oferta del array
-    setJobOffers(prevOffers => prevOffers.filter((_, i) => i !== index));
+    setCurrentIndex(index + 1);
   };
 
+  // ✅ CORREGIDO: Usar el swiper ref para acciones manuales
   const handleLike = () => {
-    if (likes > 0) {
-      setLikes(prev => prev - 1);
-      // Aquí podrías agregar lógica para like manual si lo deseas
+    if (likes > 0 && swiperRef.current && currentIndex < jobOffers.length) {
+      swiperRef.current.swipeRight();
     }
   };
 
   const handleSuperLike = () => {
-    if (superLikes > 0) {
-      setSuperLikes(prev => prev - 1);
-      // Aquí podrías agregar lógica para super like manual si lo deseas
+    if (superLikes > 0 && swiperRef.current && currentIndex < jobOffers.length) {
+      setSuperLikes(prev => Math.max(0, prev - 1));
+      swiperRef.current.swipeRight(); // o crear una acción especial para super like
     }
   };
 
   const handleReject = () => {
-    if (jobOffers.length > 0) {
-      setJobOffers(prevOffers => prevOffers.slice(1));
+    if (swiperRef.current && currentIndex < jobOffers.length) {
+      swiperRef.current.swipeLeft();
     }
+  };
+
+  // ✅ OBTENER LA CARTA ACTUAL DE FORMA SEGURA
+  const getCurrentJob = () => {
+    return jobOffers[currentIndex] || null;
   };
 
   if (loading) {
@@ -220,7 +230,8 @@ const Home = () => {
       backgroundColor: '#F8FAFC' 
     }}
       edges={['right', 'left', 'bottom']}>
-      {/* Low Balance Warning - Fixed positioning */}
+      
+      {/* Low Balance Warning */}
       {(likes === 0 && superLikes === 0) && (
         <View style={{
           position: 'absolute',
@@ -282,35 +293,52 @@ const Home = () => {
         </View>
       )}
 
-      {/* Main Card Area - Centered container */}
+      {/* Main Card Area */}
       <View style={{ 
-        // flex: 1, 
-        // justifyContent: 'center', 
-        // alignItems: 'center',
         paddingHorizontal: 20,
       }}>
-        {jobOffers.length > 0 ? (
+        {jobOffers.length > 0 && currentIndex < jobOffers.length ? (
           <Swiper
+            ref={swiperRef}
             cards={jobOffers}
-            renderCard={(job) => (
-              <JobOfferCard
-                job={job}
-                likes={likes}
-                superLikes={superLikes}
-                onLike={handleLike}
-                onSuperLike={handleSuperLike}
-                onReject={handleReject}
-              />
-            )}
+            cardIndex={currentIndex} // ✅ Controlar el índice actual
+            renderCard={(job) => {
+              // ✅ VERIFICACIÓN ADICIONAL: Si job es undefined, mostrar placeholder
+              if (!job) {
+                return (
+                  <View style={{
+                    width: width * 0.9,
+                    height: height * 0.70,
+                    backgroundColor: '#F3F4F6',
+                    borderRadius: 24,
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}>
+                    <Text>Cargando siguiente oferta...</Text>
+                  </View>
+                );
+              }
+              
+              return (
+                <JobOfferCard
+                  job={job}
+                  likes={likes}
+                  superLikes={superLikes}
+                  onLike={handleLike}
+                  onSuperLike={handleSuperLike}
+                  onReject={handleReject}
+                />
+              );
+            }}
             onSwipedRight={handleSwipedRight}
             onSwipedLeft={handleSwipedLeft}
-            cardIndex={0}
             backgroundColor="#F8FAFC"
             stackSize={3}
             stackSeparation={15}
             animateCardOpacity
             animateOverlayLabelsOpacity
             swipeBackCard
+            infinite={false} // ✅ Evitar loops infinitos
             overlayLabels={{
               left: {
                 title: 'Dislike',
@@ -329,7 +357,23 @@ const Home = () => {
             }}
           />
         ) : (
-          <Text className="text-gray-500 text-center">No hay ofertas disponibles</Text>
+          <View style={{
+            width: width * 0.9,
+            height: height * 0.70,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'white',
+            borderRadius: 24,
+            alignSelf: 'center'
+          }}>
+            <Icon name="check-circle" size={60} color="#10B981" />
+            <Text className="text-gray-600 text-center text-lg font-poppins mt-4">
+              ¡Has visto todas las ofertas disponibles!
+            </Text>
+            <Text className="text-gray-500 text-center text-sm font-poppins mt-2">
+              Vuelve más tarde para ver nuevas oportunidades
+            </Text>
+          </View>
         )}
       </View>
 

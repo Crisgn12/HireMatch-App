@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://192.168.100.100:8080';
+const API_BASE_URL = 'http://192.168.0.5:8080';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -15,7 +15,7 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('token');
-    console.log('JWT Token:', token); // Debug log
+    console.log('JWT Token:', token); // Debug log 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -394,5 +394,75 @@ export const likeJobOffer = async (ofertaId: number) => {
     throw new Error('Error al dar like a la oferta: ' + (error as Error).message);
   }
 }
+
+// Interfaz para la respuesta del endpoint
+interface MatchUsuarioResponse {
+  postulacionId: number;
+  ofertaId: number;
+  tituloOferta: string;
+  descripcionOferta: string;
+  ubicacionOferta: string;
+  empresaNombre: string;
+  empresaDescripcion: string;
+  fechaPostulacion: string;
+  estado: string;
+  superLike: boolean;
+}
+
+// Estados de postulación válidos
+export type EstadoPostulacion = 
+  | 'PENDIENTE' 
+  | 'REVISADA' 
+  | 'ACEPTADA' 
+  | 'RECHAZADA';
+
+/**
+ * Obtiene las postulaciones/matches del usuario autenticado
+ * @param estado - Estado opcional para filtrar las postulaciones
+ * @returns Promise con array de MatchUsuarioResponse
+ */
+export const getUserApplications = async (estado?: EstadoPostulacion): Promise<MatchUsuarioResponse[]> => {
+  try {
+    let url = '/api/matches/usuario';
+    if (estado) {
+      url += `?estadoParam=${estado}`;
+    }
+
+    const response = await api.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user applications:', error);
+    throw new Error('Error al obtener las postulaciones: ' + (error as Error).message);
+  }
+};
+
+/**
+ * Obtiene los detalles de una postulación específica del usuario
+ * @param postulacionId - ID de la postulación
+ * @returns Promise con los detalles de la postulación
+ */
+export const getApplicationDetails = async (postulacionId: number): Promise<MatchUsuarioResponse> => {
+  try {
+    const response = await api.get(`/api/matches/usuario/${postulacionId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching application details:', error);
+    throw new Error('Error al obtener los detalles de la postulación: ' + (error as Error).message);
+  }
+};
+
+// Actualizar esta función para usar 'token' en lugar de 'authToken'
+export const getAuthToken = async (): Promise<string> => {
+  const token = await AsyncStorage.getItem('token'); // Cambiado de 'authToken' a 'token'
+  if (!token) {
+    throw new Error('No se encontró token de autenticación. Por favor, inicia sesión.');
+  }
+  return token;
+};
+
+export const isValidEstadoPostulacion = (estado: string): estado is EstadoPostulacion => {
+  const validEstados: EstadoPostulacion[] = ['PENDIENTE', 'REVISADA', 'ACEPTADA', 'RECHAZADA'];
+  return validEstados.includes(estado as EstadoPostulacion);
+};
 
 export default api;

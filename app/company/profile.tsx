@@ -1,5 +1,7 @@
+import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { getUserProfile, updateUserProfile } from '../services/api';
@@ -19,6 +21,17 @@ interface ProfileFormData {
   tipo_perfil: 'postulante' | 'empresa';
   foto: string | null;
 }
+
+const handleLogout = async () => {
+    try {
+      // Remover el token de AsyncStorage
+      await AsyncStorage.removeItem('token');
+      // Redirigir a la pantalla de login
+      router.replace('/auth/login');
+    } catch (error) {
+      console.log('Error al cerrar sesión:', error);
+    }
+  };
 
 const Profile = () => {
   const [formData, setFormData] = useState<ProfileFormData>({
@@ -394,6 +407,17 @@ const Profile = () => {
               </View>
             </View>
           </View>
+          <TouchableOpacity
+                          onPress={handleLogout}
+                          className="mt-4 bg-red-400 rounded-full px-6 py-2 mb-8"
+                        >
+                          <Text
+                            style={{ fontFamily: 'Poppins-SemiBold' }}
+                            className="text-white text-base text-center"
+                          >
+                            Cerrar sesión
+                          </Text>
+                        </TouchableOpacity>
         </View>
       </ScrollView>
 

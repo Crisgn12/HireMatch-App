@@ -22,7 +22,7 @@ const Login = () => {
           if (tipoPerfil === 'postulante') {
             router.replace('/(tabs)/home');
           } else if (tipoPerfil === 'empresa') {
-            router.replace('/company/companyHome');
+            router.replace('/company/jobOffers');
           } else {
             await AsyncStorage.removeItem('token');
             console.log('Tipo de perfil no válido:', tipoPerfil);
@@ -57,7 +57,7 @@ const Login = () => {
           if (tipoPerfil === 'postulante') {
             router.replace('/(tabs)/home');
           } else if (tipoPerfil === 'empresa') {
-            router.replace('/company/companyHome');
+            router.replace('/company/jobOffers');
           } else {
             await AsyncStorage.removeItem('token');
             setError('Tipo de perfil no válido.');

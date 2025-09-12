@@ -25,6 +25,17 @@ export default function TabsLayout() {
         />
         
         <Tabs.Screen
+          name="applications"
+          options={{
+            title: 'Mis Postulaciones',
+            tabBarLabel: 'Postulaciones',
+            tabBarIcon: ({ color, size }) => (
+              <Icon name="favorite" size={size} color={color} />
+            ),
+          }}
+        />
+        
+        <Tabs.Screen
           name="profile"
           options={{
             title: 'Mi Perfil',

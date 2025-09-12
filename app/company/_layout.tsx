@@ -16,22 +16,12 @@ const CompanyLayout = () => {
           tabBarStyle: { backgroundColor: '#F5F5F5' }, // Estilo de la barra
         }}
       >
-        <Tabs.Screen
-          name="companyHome"
-          options={{
-            title: 'Inicio',
-            tabBarLabel: 'Inicio',
-            tabBarIcon: ({ color, size }) => (
-              <Icon name="home" size={size} color={color} />
-            ),
-          }}
-        />
 
         <Tabs.Screen
           name="jobOffers"
           options={{
             title: 'Mis Ofertas',
-            tabBarLabel: 'Mis Ofertas',
+            tabBarLabel: 'Inicio',
             tabBarIcon: ({ color, size }) => (
               <Icon name="cases" size={size} color={color} />
             ),
