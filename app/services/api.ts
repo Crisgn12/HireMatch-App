@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://192.168.0.5:8080';
+const API_BASE_URL = 'http://192.168.0.9:8080';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -473,5 +473,77 @@ export const isValidEstadoPostulacion = (estado: string): estado is EstadoPostul
   const validEstados: EstadoPostulacion[] = ['PENDIENTE', 'REVISADA', 'ACEPTADA', 'RECHAZADA'];
   return validEstados.includes(estado as EstadoPostulacion);
 };
+
+// Interfaces para los nuevos endpoints
+export interface LikeResponse {
+  likeId: number;
+  usuarioEmail: string;
+  fechaLike: string;
+  tipoLike: string; // 'LIKE' o 'SUPER_LIKE'
+}
+
+export interface PerfilPublicoResponse {
+  perfilId: number;
+  nombreCompleto: string;
+  email: string;
+  tipoPerfil: string;
+  descripcion?: string;
+  ubicacion?: string;
+  habilidades?: string;
+  experiencia?: string;
+  educacion?: string;
+  certificaciones?: string;
+  intereses?: string;
+  fotoUrl?: string;
+}
+
+// Función para obtener perfil público por email
+export const getPerfilPublicoPorEmail = async (email: string): Promise<PerfilPublicoResponse> => {
+  const token = await AsyncStorage.getItem('token');
+  if (!token) {
+    throw new Error('No hay token de autenticación');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/perfiles/publico?email=${encodeURIComponent(email)}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.mensaje || 'Error al obtener perfil público');
+  }
+
+  return response.json();
+};
+
+// Función para obtener likes por oferta
+export const getLikesByOferta = async (ofertaId: number): Promise<LikeResponse[]> => {
+  const token = await AsyncStorage.getItem('token');
+  if (!token) {
+    throw new Error('No hay token de autenticación');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/likes/oferta/${ofertaId}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.mensaje || 'Error al obtener postulantes');
+  }
+
+  return response.json();
+};
+
+
+
 
 export default api;

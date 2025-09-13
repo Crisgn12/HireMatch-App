@@ -60,7 +60,7 @@ const JobDetails = () => {
           throw new Error('ID de oferta no válido');
         }
         const jobId = parseInt(id, 10);
-        
+
         // Obtener detalles de la oferta
         const response = await getJobOfferDetails(jobId);
         console.log('Raw job offer details response:', JSON.stringify(response, null, 2));
@@ -94,7 +94,7 @@ const JobDetails = () => {
           console.log('Raw user profile response:', JSON.stringify(userProfile, null, 2));
           console.log('Comparing userProfile.tipoPerfil:', userProfile.tipoPerfil, 'with "EMPRESA"');
           console.log('Comparing userProfile.empresaId:', userProfile.empresaId, 'with response.empresaId:', response.empresaId);
-          
+
           if (userProfile.tipoPerfil?.toLowerCase() === 'empresa' && userProfile.empresaId != null && userProfile.empresaId === response.empresaId) {
             console.log('User is the owner of the job offer');
             setIsOwner(true);
@@ -213,23 +213,32 @@ const JobDetails = () => {
           <Text className="text-sm text-gray-500 mr-2">• {job.tipoContratoDescripcion}</Text>
           <Text className="text-sm text-gray-500">• {job.nivelExperiencia}</Text>
         </View>
-        
+
         <Text className="text-lg font-poppins-semibold text-gray-700 mb-2">Descripción</Text>
         <Text className="text-gray-600 mb-4">{job.descripcion}</Text>
-        
+
         <Text className="text-lg font-poppins-semibold text-gray-700 mb-2">Área de Trabajo</Text>
         <Text className="text-gray-600 mb-4">{job.areaTrabajo}</Text>
-        
+
         <Text className="text-lg font-poppins-semibold text-gray-700 mb-2">Salario</Text>
         <Text className="text-gray-600 mb-4">{job.salarioFormateado}</Text>
-        
+
         <Text className="text-lg font-poppins-semibold text-gray-700 mb-2">Aplicaciones Recibidas</Text>
         <Text className="text-gray-600 mb-4">{job.aplicacionesRecibidas}</Text>
-        
+
         <Text className="text-sm text-gray-400 mb-4">{job.tiempoPublicacion}</Text>
-        
+
         {isOwner && (
           <View className="flex-col">
+            <TouchableOpacity
+              onPress={() => router.push(`/companyExtraViews/applicants/${job.id}`)}
+              className="bg-green-500 rounded-full px-6 py-2 mt-4 flex-row items-center justify-center"
+            >
+              <Icon name="people" size={20} color="white" />
+              <Text className="text-white font-poppins-semibold text-base text-center ml-2">
+                Ver Postulantes ({job.aplicacionesRecibidas})
+              </Text>
+            </TouchableOpacity>
             <TouchableOpacity
               onPress={handleEdit}
               className="bg-blue-500 rounded-full px-6 py-2 mt-4 flex-row items-center justify-center"
@@ -246,7 +255,7 @@ const JobDetails = () => {
             </TouchableOpacity>
           </View>
         )}
-        
+
         {!isOwner && (
           <TouchableOpacity
             onPress={() => Alert.alert('Aplicar', 'Función de aplicación simulada')}
@@ -255,7 +264,7 @@ const JobDetails = () => {
             <Text className="text-white font-poppins-semibold text-base text-center">Aplicar</Text>
           </TouchableOpacity>
         )}
-        
+
         <TouchableOpacity
           onPress={() => router.back()}
           className="bg-gray-200 rounded-full px-6 py-2 mt-2"
