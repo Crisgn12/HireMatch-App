@@ -323,12 +323,6 @@ const ApplicationDetails = () => {
               Postulado el: {formatDate(jobDetails.fechaPostulacion)}
             </Text>
           </View>
-          <View className="flex-row items-center mb-2">
-            <Icon name="info" size={16} color="#6B7280" />
-            <Text className="text-gray-600 ml-2 font-poppins">
-              ID de postulación: {jobDetails.postulacionId}
-            </Text>
-          </View>
           <View className="flex-row items-center">
             <Icon name="access-time" size={16} color="#6B7280" />
             <Text className="text-gray-600 ml-2 font-poppins">
