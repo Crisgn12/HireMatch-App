@@ -38,7 +38,7 @@ const JobOfferCard: React.FC<JobOfferCardProps> = ({ job, likes, superLikes, onL
       className="bg-white rounded-3xl shadow-2xl border border-gray-100 relative overflow-hidden"
       style={{
         width: width * 0.9,
-        height: height * 0.70, // Aumentamos la altura para incluir los botones
+        height: height * 0.65, // Reducido de 0.70 a 0.65
         elevation: 20,
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.15,
@@ -65,46 +65,46 @@ const JobOfferCard: React.FC<JobOfferCardProps> = ({ job, likes, superLikes, onL
       </View>
 
       {/* Main Content Container */}
-      <View className="flex-1 p-8 pt-20 justify-between">
+      <View className="flex-1 p-6 pt-16 justify-between">
         {/* Header Section */}
         <View>
           {/* Company Name with Icon */}
-          <View className="flex-row items-center mb-4">
-            <View className="bg-blue-100 rounded-full p-3 mr-3">
-              <Icon name="business" size={24} color="#3B82F6" />
+          <View className="flex-row items-center mb-3">
+            <View className="bg-blue-100 rounded-full p-2 mr-3">
+              <Icon name="business" size={20} color="#3B82F6" />
             </View>
             <View className="flex-1">
-              <Text className="text-lg font-poppins-semibold text-gray-700">{job.empresaNombre}</Text>
-              <Text className="text-sm font-poppins text-gray-500">{job.areaTrabajo || 'Tecnología'}</Text>
+              <Text className="text-base font-poppins-semibold text-gray-700">{job.empresaNombre}</Text>
+              <Text className="text-xs font-poppins text-gray-500">{job.areaTrabajo || 'Tecnología'}</Text>
             </View>
           </View>
 
           {/* Job Title */}
-          <Text className="text-3xl font-poppins-bold text-gray-900 mb-6 leading-tight">
+          <Text className="text-2xl font-poppins-bold text-gray-900 mb-4 leading-tight">
             {job.titulo}
           </Text>
 
           {/* Job Details Grid */}
-          <View className="bg-gray-50 rounded-2xl p-5 mb-6">
-            <View className="flex-row items-center mb-4">
-              <Icon name="location-on" size={20} color="#6B7280" />
-              <Text className="text-base font-poppins-medium text-gray-700 ml-3">{job.ubicacion}</Text>
+          <View className="bg-gray-50 rounded-2xl p-4 mb-4">
+            <View className="flex-row items-center mb-3">
+              <Icon name="location-on" size={18} color="#6B7280" />
+              <Text className="text-sm font-poppins-medium text-gray-700 ml-3">{job.ubicacion}</Text>
             </View>
             
-            <View className="flex-row items-center mb-4">
-              <Icon name="work" size={20} color="#6B7280" />
-              <Text className="text-base font-poppins-medium text-gray-700 ml-3">{job.tipoTrabajo} • {job.tipoContrato}</Text>
+            <View className="flex-row items-center mb-3">
+              <Icon name="work" size={18} color="#6B7280" />
+              <Text className="text-sm font-poppins-medium text-gray-700 ml-3">{job.tipoTrabajo} • {job.tipoContrato}</Text>
             </View>
             
-            <View className="flex-row items-center mb-4">
-              <Icon name="trending-up" size={20} color="#6B7280" />
-              <Text className="text-base font-poppins-medium text-gray-700 ml-3">{job.nivelExperiencia}</Text>
+            <View className="flex-row items-center mb-3">
+              <Icon name="trending-up" size={18} color="#6B7280" />
+              <Text className="text-sm font-poppins-medium text-gray-700 ml-3">{job.nivelExperiencia}</Text>
             </View>
 
             {job.mostrarSalario && (
               <View className="flex-row items-center">
-                <Icon name="attach-money" size={20} color="#059669" />
-                <Text className="text-base font-poppins-bold text-green-600 ml-3">
+                <Icon name="attach-money" size={18} color="#059669" />
+                <Text className="text-sm font-poppins-bold text-green-600 ml-3">
                   {job.salarioFormateado || 'Salario competitivo'}
                 </Text>
               </View>
@@ -115,24 +115,39 @@ const JobOfferCard: React.FC<JobOfferCardProps> = ({ job, likes, superLikes, onL
         {/* Footer Section */}
         <View>
           {/* Publication Time */}
-          <View className="flex-row items-center justify-center mb-6">
-            <Icon name="access-time" size={16} color="#9CA3AF" />
-            <Text className="text-sm font-poppins text-gray-500 ml-2">{job.tiempoPublicacion}</Text>
+          <View className="flex-row items-center justify-center mb-4">
+            <Icon name="access-time" size={14} color="#9CA3AF" />
+            <Text className="text-xs font-poppins text-gray-500 ml-2">{job.tiempoPublicacion}</Text>
           </View>
           
           {/* Details Button */}
           <TouchableOpacity
             onPress={() => router.push(`/companyExtraViews/${job.id}`)}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl py-4 flex-row items-center justify-center shadow-lg mb-6"
             style={{
-              elevation: 8,
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.2,
-              shadowRadius: 8,
+              backgroundColor: 'white',
+              borderRadius: 16,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 16,
+              elevation: 6,
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.15,
+              shadowRadius: 6,
+              borderWidth: 1,
+              borderColor: '#E5E7EB',
             }}
           >
-            <Icon name="visibility" size={24} color="black" />
-            <Text className="text-black font-poppins-bold text-lg ml-3">Ver Detalles</Text>
+            <Icon name="visibility" size={20} color="#374151" />
+            <Text style={{
+              color: '#374151',
+              fontWeight: 'bold',
+              fontSize: 16,
+              marginLeft: 8,
+              textAlign: 'center'
+            }}>Ver Detalles</Text>
           </TouchableOpacity>
 
           {/* Action Buttons */}
@@ -140,24 +155,24 @@ const JobOfferCard: React.FC<JobOfferCardProps> = ({ job, likes, superLikes, onL
             flexDirection: 'row',
             justifyContent: 'space-around',
             alignItems: 'center',
-            paddingBottom: 20,
+            paddingBottom: 8,
           }}>
             {/* Reject Button */}
             <Pressable
               onPress={onReject}
               style={{
                 backgroundColor: 'white',
-                borderRadius: 30,
-                padding: 16,
+                borderRadius: 25,
+                padding: 12,
                 borderWidth: 2,
                 borderColor: '#FEE2E2',
-                elevation: 6,
-                shadowOffset: { width: 0, height: 3 },
-                shadowOpacity: 0.2,
-                shadowRadius: 8,
+                elevation: 4,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
               }}
             >
-              <Icon name="close" size={28} color="#EF4444" />
+              <Icon name="close" size={24} color="#EF4444" />
             </Pressable>
 
             {/* Super Like Button */}
@@ -166,15 +181,15 @@ const JobOfferCard: React.FC<JobOfferCardProps> = ({ job, likes, superLikes, onL
               disabled={superLikes === 0}
               style={{
                 backgroundColor: superLikes === 0 ? '#D1D5DB' : '#F59E0B',
-                borderRadius: 35,
-                padding: 20,
-                elevation: 10,
-                shadowOffset: { width: 0, height: 5 },
-                shadowOpacity: 0.3,
-                shadowRadius: 12,
+                borderRadius: 30,
+                padding: 16,
+                elevation: 8,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 8,
               }}
             >
-              <Icon name="star" size={32} color={superLikes === 0 ? 'gray' : 'white'} />
+              <Icon name="star" size={28} color={superLikes === 0 ? 'gray' : 'white'} />
             </Pressable>
 
             {/* Like Button */}
@@ -183,17 +198,17 @@ const JobOfferCard: React.FC<JobOfferCardProps> = ({ job, likes, superLikes, onL
               disabled={likes === 0}
               style={{
                 backgroundColor: likes === 0 ? '#D1D5DB' : 'white',
-                borderRadius: 30,
-                padding: 16,
+                borderRadius: 25,
+                padding: 12,
                 borderWidth: 2,
                 borderColor: likes === 0 ? '#D1D5DB' : '#D1FAE5',
-                elevation: 6,
-                shadowOffset: { width: 0, height: 3 },
-                shadowOpacity: 0.2,
-                shadowRadius: 8,
+                elevation: 4,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
               }}
             >
-              <Icon name="favorite" size={28} color={likes === 0 ? 'gray' : '#10B981'} />
+              <Icon name="favorite" size={24} color={likes === 0 ? 'gray' : '#10B981'} />
             </Pressable>
           </View>
         </View>

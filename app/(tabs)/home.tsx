@@ -1,7 +1,7 @@
 import { useNavigation, useRouter } from 'expo-router';
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Dimensions, Pressable, Text, View } from 'react-native';
-import Swiper from 'react-native-deck-swiper';
+import { Swiper, type SwiperCardRefType } from 'rn-swiper-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import JobOfferCard from '../components/JobOfferCard';
@@ -29,7 +29,7 @@ interface JobOffer {
 const Home = () => {
   const router = useRouter();
   const navigation = useNavigation();
-  const swiperRef = useRef<Swiper<JobOffer>>(null);
+  const swiperRef = useRef<SwiperCardRefType>(null);
   const [likes, setLikes] = useState(1);
   const [superLikes, setSuperLikes] = useState(1);
   const [jobOffers, setJobOffers] = useState<JobOffer[]>([]);
@@ -164,25 +164,6 @@ const Home = () => {
     const job = jobOffers[index];
     if (!job) return;
     
-    // ❌ Si no hay likes, revertir la acción y mostrar mensaje
-    if (likes <= 0) {
-      console.log('No hay likes disponibles');
-      // Opcional: mostrar toast/alerta
-      // Toast.show('No tienes likes disponibles');
-      
-      // Revertir la carta a su posición original
-      if (swiperRef.current) {
-        // Forzar que la carta regrese (esto puede variar según la librería)
-        swiperRef.current.swipeLeft(); // Esto cancela el swipe right
-        setTimeout(() => {
-          if (swiperRef.current) {
-            swiperRef.current.swipeBack();
-          }
-        }, 100);
-      }
-      return; // No continuar con la lógica
-    }
-    
     try {
       await likeJobOffer(job.id);
       setLikes(prev => Math.max(0, prev - 1));
@@ -205,22 +186,6 @@ const Home = () => {
     const job = jobOffers[index];
     if (!job) return;
 
-    // ❌ Si no hay super likes, revertir la acción
-    if (superLikes <= 0) {
-      console.log('No hay super likes disponibles');
-      
-      // Revertir la carta a su posición original
-      if (swiperRef.current) {
-        swiperRef.current.swipeLeft(); // Cancelar el movimiento
-        setTimeout(() => {
-          if (swiperRef.current) {
-            swiperRef.current.swipeBack();
-          }
-        }, 100);
-      }
-      return; // No continuar
-    }
-
     try {
       await superLikeJobOffer(job.id);
       setSuperLikes(prev => Math.max(0, prev - 1));
@@ -234,46 +199,147 @@ const Home = () => {
     }
   };
 
-  // ✅ MÉTODO ALTERNATIVO: Usar onSwiping para bloquear antes del swipe
-  const handleSwiping = (x: number, y: number) => {
-    // Detectar dirección del swipe
-    const isSwipeRight = x > 50;
-    const isSwipeTop = y < -50;
-    
-    // Bloquear swipe right si no hay likes
-    if (isSwipeRight && likes <= 0) {
-      return false; // Bloquear el swipe
-    }
-    
-    // Bloquear swipe top si no hay super likes
-    if (isSwipeTop && superLikes <= 0) {
-      return false; // Bloquear el swipe
-    }
-    
-    return true; // Permitir el swipe
-  };
-
-  const handleLike = () => {
+  const handleLike = useCallback(() => {
     if (likes > 0 && swiperRef.current && currentIndex < jobOffers.length) {
       swiperRef.current.swipeRight();
     }
-  };
+  }, [likes, currentIndex, jobOffers.length]);
 
-  const handleSuperLike = async () => {
+  const handleSuperLike = useCallback(async () => {
     if (superLikes > 0 && swiperRef.current && currentIndex < jobOffers.length) {
       swiperRef.current.swipeTop();
     }
-  };
+  }, [superLikes, currentIndex, jobOffers.length]);
 
-  const handleReject = () => {
+  const handleReject = useCallback(() => {
     if (swiperRef.current && currentIndex < jobOffers.length) {
       swiperRef.current.swipeLeft();
     }
-  };
+  }, [currentIndex, jobOffers.length]);
 
-  const getCurrentJob = () => {
-    return jobOffers[currentIndex] || null;
-  };
+  // Crear los componentes de overlay para rn-swiper-list (estilo original)
+  const OverlayLabelRight = useCallback(() => {
+    return (
+      <View style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+        justifyContent: 'flex-start',
+        alignItems: 'flex-start',
+        paddingTop: 60,
+        paddingLeft: 30,
+      }}>
+        <View style={{
+          backgroundColor: '#10B981',
+          paddingHorizontal: 20,
+          paddingVertical: 10,
+          borderRadius: 10,
+          transform: [{ rotate: '-30deg' }]
+        }}>
+          <Text style={{ 
+            color: 'white', 
+            fontWeight: 'bold', 
+            fontSize: 24,
+            textAlign: 'center'
+          }}>LIKE</Text>
+        </View>
+      </View>
+    );
+  }, []);
+
+  const OverlayLabelLeft = useCallback(() => {
+    return (
+      <View style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(239, 68, 68, 0.2)',
+        justifyContent: 'flex-start',
+        alignItems: 'flex-end',
+        paddingTop: 60,
+        paddingRight: 30,
+      }}>
+        <View style={{
+          backgroundColor: '#EF4444',
+          paddingHorizontal: 20,
+          paddingVertical: 10,
+          borderRadius: 10,
+          transform: [{ rotate: '30deg' }]
+        }}>
+          <Text style={{ 
+            color: 'white', 
+            fontWeight: 'bold', 
+            fontSize: 24,
+            textAlign: 'center'
+          }}>DISLIKE</Text>
+        </View>
+      </View>
+    );
+  }, []);
+
+  const OverlayLabelTop = useCallback(() => {
+    return (
+      <View style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(245, 158, 11, 0.2)',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        paddingBottom: 120,
+      }}>
+        <View style={{
+          backgroundColor: '#F59E0B',
+          paddingHorizontal: 15,
+          paddingVertical: 8,
+          borderRadius: 10,
+        }}>
+          <Text style={{ 
+            color: 'white', 
+            fontWeight: 'bold', 
+            fontSize: 20,
+            textAlign: 'center'
+          }}>SUPER LIKE</Text>
+        </View>
+      </View>
+    );
+  }, []);
+
+  // Función para renderizar cada carta
+  const renderCard = useCallback((job: JobOffer, index: number) => {
+    if (!job) {
+      return (
+        <View style={{
+          width: width * 0.9,
+          height: height * 0.65,
+          backgroundColor: '#F3F4F6',
+          borderRadius: 24,
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <Text>Cargando siguiente oferta...</Text>
+        </View>
+      );
+    }
+    
+    return (
+      <JobOfferCard
+        job={job}
+        likes={likes}
+        superLikes={superLikes}
+        onLike={handleLike}
+        onSuperLike={handleSuperLike}
+        onReject={handleReject}
+      />
+    );
+  }, [likes, superLikes, handleLike, handleSuperLike, handleReject]);
 
   if (loading) {
     return (
@@ -363,88 +429,82 @@ const Home = () => {
 
       {/* Main Card Area */}
       <View style={{ 
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
         paddingHorizontal: 20,
       }}>
         {jobOffers.length > 0 && currentIndex < jobOffers.length ? (
           <Swiper
             ref={swiperRef}
-            cards={jobOffers}
-            cardIndex={currentIndex}
-            renderCard={(job) => {
-              if (!job) {
-                return (
-                  <View style={{
-                    width: width * 0.9,
-                    height: height * 0.70,
-                    backgroundColor: '#F3F4F6',
-                    borderRadius: 24,
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}>
-                    <Text>Cargando siguiente oferta...</Text>
-                  </View>
-                );
-              }
-              
-              return (
-                <JobOfferCard
-                  job={job}
-                  likes={likes}
-                  superLikes={superLikes}
-                  onLike={handleLike}
-                  onSuperLike={handleSuperLike}
-                  onReject={handleReject}
-                />
-              );
+            data={jobOffers}
+            renderCard={renderCard}
+            onSwipeRight={handleSwipedRight}
+            onSwipeLeft={handleSwipedLeft}
+            onSwipeTop={handleSwipedTop}
+            onIndexChange={setCurrentIndex}
+            disableRightSwipe={likes <= 0}
+            disableTopSwipe={superLikes <= 0}
+            OverlayLabelRight={OverlayLabelRight}
+            OverlayLabelLeft={OverlayLabelLeft}
+            OverlayLabelTop={OverlayLabelTop}
+            cardStyle={{
+              width: width * 0.9,
+              height: height * 0.65,
+              borderRadius: 24,
+              elevation: 8,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 8,
             }}
-            onSwipedRight={handleSwipedRight}
-            onSwipedLeft={handleSwipedLeft}
-            onSwipedTop={handleSwipedTop}
-            // ✅ AGREGAR VALIDACIÓN DURANTE EL SWIPE (si la librería lo soporta)
-            // onSwiping={handleSwiping} // Descomenta si tu versión lo soporta
-            backgroundColor="#F8FAFC"
-            stackSize={3}
-            stackSeparation={15}
-            animateCardOpacity
-            animateOverlayLabelsOpacity
-            swipeBackCard
-            infinite={false}
-            // ✅ DESHABILITAR SWIPES CUANDO NO HAY RECURSOS
-            disableRightSwipe={likes <= 0} // Bloquea swipe right
-            disableTopSwipe={superLikes <= 0} // Bloquea swipe top
-            overlayLabels={{
-              left: {
-                title: 'Dislike',
-                style: {
-                  label: { backgroundColor: '#EF4444', color: 'white', padding: 10 },
-                  wrapper: { flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start', marginTop: 30, marginLeft: -30 },
-                },
-              },
-              right: {
-                title: 'Like',
-                style: {
-                  label: { backgroundColor: '#10B981', color: 'white', padding: 10 },
-                  wrapper: { flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', marginTop: 30, marginLeft: 30 },
-                },
-              },
-              top: {
-                title: 'Super Like',
-                style: {
-                  label: { backgroundColor: '#F59E0B', color: 'white', padding: 10 },
-                  wrapper: { flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', marginTop: -30, marginLeft: 0 },
-                },
-              },
+            overlayLabelContainerStyle={{
+              borderRadius: 24,
+            }}
+            // Configuración para cartas apiladas
+            prerenderItems={3}
+            loop={false}
+            // Configuración para el efecto de apilado visual y swipes
+            translateXRange={[-width / 2, 0, width / 2]}
+            translateYRange={[-height / 2, 0, height / 2]}
+            rotateInputRange={[-width / 3, 0, width / 3]}
+            rotateOutputRange={[-Math.PI / 20, 0, Math.PI / 20]}
+            // Configuración específica para swipe hacia arriba
+            swipeVelocityThreshold={800}
+            // Rangos de opacidad para overlays
+            inputOverlayLabelTopOpacityRange={[0, -height / 4]}
+            outputOverlayLabelTopOpacityRange={[0, 1]}
+            inputOverlayLabelRightOpacityRange={[0, width / 4]}
+            outputOverlayLabelRightOpacityRange={[0, 1]}
+            inputOverlayLabelLeftOpacityRange={[0, -width / 4]}
+            outputOverlayLabelLeftOpacityRange={[0, 1]}
+            // Configuración de spring para swipes más responsivos
+            swipeTopSpringConfig={{
+              damping: 20,
+              stiffness: 300,
+              mass: 1,
+              overshootClamping: false,
+              restDisplacementThreshold: 0.01,
+              restSpeedThreshold: 2,
+            }}
+            swipeRightSpringConfig={{
+              damping: 20,
+              stiffness: 300,
+              mass: 1,
+            }}
+            swipeLeftSpringConfig={{
+              damping: 20,
+              stiffness: 300,
+              mass: 1,
             }}
           />
         ) : (
           <View style={{
             width: width * 0.9,
-            height: height * 0.70,
+            height: height * 0.65,
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: 'white',
             borderRadius: 24,
-            alignSelf: 'center'
           }}>
             <Icon name="check-circle" size={60} color="#10B981" />
             <Text className="text-gray-600 text-center text-lg font-poppins mt-4">

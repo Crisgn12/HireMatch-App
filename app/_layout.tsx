@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import './global.css';
 
 export default function RootLayout() {
@@ -30,12 +31,14 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack
-      initialRouteName="splash"
-      screenOptions={{ headerShown: false }}
-    >
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)/home" options={{ headerShown: true }} />
-    </Stack>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Stack
+        initialRouteName="splash"
+        screenOptions={{ headerShown: false }}
+      >
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)/home" options={{ headerShown: true }} />
+      </Stack>
+    </GestureHandlerRootView>
   );
 }
