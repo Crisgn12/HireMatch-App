@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Swiper, type SwiperCardRefType } from 'rn-swiper-list';
 import UserProfileCard from '../../components/UserProfileCard';
-import { getLikesByOferta, getPerfilPublicoPorEmail, type LikeResponse, type PerfilPublicoResponse } from '../../services/api';
+import { createMatch, getLikesByOferta, getPerfilPublicoPorEmail, type LikeResponse, type PerfilPublicoResponse } from '../../services/api';
 
 const { width, height } = Dimensions.get('window');
 
@@ -25,75 +25,101 @@ const ApplicantsView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Debug: Verificar que createMatch se importó correctamente
   useEffect(() => {
-  const fetchApplicants = async () => {
-    try {
-      if (!ofertaId || typeof ofertaId !== 'string') {
-        throw new Error('ID de oferta no válido');
-      }
-
-      const jobId = parseInt(ofertaId, 10);
-      
-      // 1. Obtener los likes de la oferta
-      const likes = await getLikesByOferta(jobId);
-      
-      // 🔍 DEBUG: Ver la estructura exacta de los likes
-      console.log('Likes received from backend:', JSON.stringify(likes, null, 2));
-      console.log('Number of likes:', likes.length);
-      
-      // Ver el primer like para analizar su estructura
-      if (likes.length > 0) {
-        console.log('First like structure:', Object.keys(likes[0]));
-        console.log('First like data:', likes[0]);
-      }
-      
-      // 2. Obtener el perfil de cada usuario que dio like
-      const applicantPromises = likes.map(async (like: LikeResponse, index: number) => {
-        try {
-          console.log(`Processing like ${index}:`, like);
-          console.log(`Email for like ${index}:`, like.usuarioEmail);
-          
-          const profile = await getPerfilPublicoPorEmail(like.usuarioEmail);
-          return {
-            ...profile,
-            likeId: like.likeId,
-            fechaLike: like.fechaLike,
-            tipoLike: like.tipoLike
-          };
-        } catch (error) {
-          console.error(`Error getting profile for ${like.usuarioEmail}:`, error);
-          return null;
-        }
-      });
-
-      const applicantResults = await Promise.all(applicantPromises);
-      const validApplicants = applicantResults.filter((applicant): applicant is ApplicantProfile => 
-        applicant !== null
-      );
-
-      console.log('Valid applicants found:', validApplicants.length);
-      setApplicants(validApplicants);
-      
-    } catch (err) {
-      console.error('Error fetching applicants:', err);
-      setError((err as Error).message || 'Error al cargar los postulantes');
-    } finally {
-      setLoading(false);
+    console.log('createMatch function imported:', typeof createMatch);
+    if (typeof createMatch !== 'function') {
+      console.error('createMatch is not a function! Check the import.');
     }
-  };
+  }, []);
 
-  fetchApplicants();
-}, [ofertaId]);
+  useEffect(() => {
+    const fetchApplicants = async () => {
+      try {
+        if (!ofertaId || typeof ofertaId !== 'string') {
+          throw new Error('ID de oferta no válido');
+        }
 
-  const handleSwipedRight = (index: number) => {
+        const jobId = parseInt(ofertaId, 10);
+        
+        // 1. Obtener los likes de la oferta
+        const likes = await getLikesByOferta(jobId);
+        
+        // 🔍 DEBUG: Ver la estructura exacta de los likes
+        console.log('Likes received from backend:', JSON.stringify(likes, null, 2));
+        console.log('Number of likes:', likes.length);
+        
+        // Ver el primer like para analizar su estructura
+        if (likes.length > 0) {
+          console.log('First like structure:', Object.keys(likes[0]));
+          console.log('First like data:', likes[0]);
+        }
+        
+        // 2. Obtener el perfil de cada usuario que dio like
+        const applicantPromises = likes.map(async (like: LikeResponse, index: number) => {
+          try {
+            console.log(`Processing like ${index}:`, like);
+            console.log(`Email for like ${index}:`, like.usuarioEmail);
+            
+            const profile = await getPerfilPublicoPorEmail(like.usuarioEmail);
+            return {
+              ...profile,
+              likeId: like.likeId,
+              fechaLike: like.fechaLike,
+              tipoLike: like.tipoLike
+            };
+          } catch (error) {
+            console.error(`Error getting profile for ${like.usuarioEmail}:`, error);
+            return null;
+          }
+        });
+
+        const applicantResults = await Promise.all(applicantPromises);
+        const validApplicants = applicantResults.filter((applicant): applicant is ApplicantProfile => 
+          applicant !== null
+        );
+
+        console.log('Valid applicants found:', validApplicants.length);
+        setApplicants(validApplicants);
+        
+      } catch (err) {
+        console.error('Error fetching applicants:', err);
+        setError((err as Error).message || 'Error al cargar los postulantes');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchApplicants();
+  }, [ofertaId]);
+
+  // Actualizado: Swipe hacia la derecha = Contactar (crear match)
+  const handleSwipedRight = async (index: number) => {
     const applicant = applicants[index];
     if (!applicant) return;
     
-    console.log('Candidato contactado:', applicant.email);
-    Alert.alert('Contactado', `Se ha marcado como contactado: ${applicant.nombreCompleto}`);
+    try {
+      console.log('Creando match para candidato contactado:', applicant.email);
+      await createMatch(applicant.likeId);
+      
+      Alert.alert(
+        '¡Match creado!',
+        `Se ha creado un match con ${applicant.nombreCompleto}. Podrán comunicarse próximamente.`
+      );
+      
+      console.log('Match creado exitosamente para:', applicant.email);
+    } catch (error) {
+      console.error('Error creating match on swipe right:', error);
+      Alert.alert(
+        'Error',
+        'No se pudo crear el match. El candidato ha sido marcado como contactado.'
+      );
+    }
+    
     setCurrentIndex(index + 1);
   };
 
+  // Sin cambios: Swipe hacia la izquierda = Descartar (sin match)
   const handleSwipedLeft = (index: number) => {
     const applicant = applicants[index];
     if (!applicant) return;
@@ -102,12 +128,29 @@ const ApplicantsView = () => {
     setCurrentIndex(index + 1);
   };
 
-  const handleSwipedTop = (index: number) => {
+  // Actualizado: Swipe hacia arriba = Favorito (crear match)
+  const handleSwipedTop = async (index: number) => {
     const applicant = applicants[index];
     if (!applicant) return;
     
-    console.log('Candidato favorito:', applicant.email);
-    Alert.alert('Favorito', `Se ha agregado a favoritos: ${applicant.nombreCompleto}`);
+    try {
+      console.log('Creando match para candidato favorito:', applicant.email);
+      await createMatch(applicant.likeId);
+      
+      Alert.alert(
+        '¡Agregado a favoritos!',
+        `${applicant.nombreCompleto} ha sido agregado a tus favoritos con match creado.`
+      );
+      
+      console.log('Match de favorito creado exitosamente para:', applicant.email);
+    } catch (error) {
+      console.error('Error creating favorite match on swipe top:', error);
+      Alert.alert(
+        'Error',
+        'No se pudo crear el match. El candidato ha sido marcado como favorito.'
+      );
+    }
+    
     setCurrentIndex(index + 1);
   };
 

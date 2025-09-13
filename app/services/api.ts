@@ -543,7 +543,27 @@ export const getLikesByOferta = async (ofertaId: number): Promise<LikeResponse[]
   return response.json();
 };
 
-
-
+  export const createMatch = async (likeId: number) => {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) {
+      throw new Error('No hay token de autenticación');
+    }
+    try {
+      const response = await api.post(
+        `/api/matches/like/${likeId}`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error creating match:', error);
+      throw error;
+    }
+  };
 
 export default api;

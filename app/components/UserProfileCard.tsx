@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Dimensions, Image, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, Image, Pressable, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { createMatch } from '../services/api';
 
 const { width, height } = Dimensions.get('window');
 
@@ -20,6 +21,10 @@ interface UserProfileCardProps {
     certificaciones?: string;
     intereses?: string;
     fotoUrl?: string;
+    // Agregar estas propiedades del like
+    likeId: number;
+    fechaLike: string;
+    tipoLike: string;
   };
   onContact: () => void;
   onReject: () => void;
@@ -42,6 +47,82 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
 
   const skillTags = getSkillTags(user.habilidades);
 
+  // Nueva función para manejar el match (contactar)
+  const handleContactMatch = async () => {
+    try {
+      Alert.alert(
+        'Contactar Candidato',
+        `¿Deseas contactar a ${user.nombreCompleto}? Esto creará un match y podrán comunicarse.`,
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+          {
+            text: 'Contactar',
+            onPress: async () => {
+              try {
+                await createMatch(user.likeId);
+                Alert.alert(
+                  '¡Match creado!',
+                  `Se ha creado un match con ${user.nombreCompleto}. Podrán comunicarse próximamente.`,
+                  [{ text: 'OK', onPress: onContact }]
+                );
+              } catch (error) {
+                console.error('Error creating match:', error);
+                Alert.alert(
+                  'Error',
+                  'No se pudo crear el match. Inténtalo de nuevo.',
+                  [{ text: 'OK' }]
+                );
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error in handleContactMatch:', error);
+    }
+  };
+
+  // Nueva función para manejar favoritos
+  const handleFavoriteMatch = async () => {
+    try {
+      Alert.alert(
+        'Agregar a Favoritos',
+        `¿Deseas agregar a ${user.nombreCompleto} a favoritos? Esto creará un match especial.`,
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+          {
+            text: 'Agregar',
+            onPress: async () => {
+              try {
+                await createMatch(user.likeId);
+                Alert.alert(
+                  '¡Agregado a favoritos!',
+                  `${user.nombreCompleto} ha sido agregado a tus favoritos.`,
+                  [{ text: 'OK', onPress: onFavorite }]
+                );
+              } catch (error) {
+                console.error('Error creating favorite match:', error);
+                Alert.alert(
+                  'Error',
+                  'No se pudo agregar a favoritos. Inténtalo de nuevo.',
+                  [{ text: 'OK' }]
+                );
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error in handleFavoriteMatch:', error);
+    }
+  };
+
   return (
     <View 
       className="bg-white rounded-3xl shadow-2xl border border-gray-100 relative overflow-hidden"
@@ -54,14 +135,20 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
         shadowRadius: 20,
       }}
     >
-      {/* Background Gradient Effect */}
-      <View className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-green-50 to-transparent opacity-60" />
+      {/* Background Gradient Effect - Actualizado con colores azules */}
+      <View 
+        className="absolute top-0 left-0 right-0 h-32 opacity-60"
+        style={{ backgroundColor: 'rgba(0, 81, 135, 0.1)' }}
+      />
       
-      {/* Profile Type Badge */}
+      {/* Profile Type Badge - Actualizado con colores azules */}
       <View className="absolute top-6 right-6 z-10">
-        <View className="bg-gradient-to-r from-green-400 to-emerald-400 rounded-full px-4 py-2 flex-row items-center shadow-lg">
-          <Icon name="person" size={16} color="black" />
-          <Text className="text-black text-xs font-poppins-bold ml-1">CANDIDATO</Text>
+        <View 
+          className="rounded-full px-4 py-2 flex-row items-center shadow-lg"
+          style={{ backgroundColor: '#005187' }}
+        >
+          <Icon name="person" size={16} color="white" />
+          <Text className="text-white text-xs font-poppins-bold ml-1">CANDIDATO</Text>
         </View>
       </View>
 
@@ -78,8 +165,11 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
                 style={{ backgroundColor: '#F3F4F6' }}
               />
             ) : (
-              <View className="w-20 h-20 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 border-4 border-white shadow-lg items-center justify-center">
-                <Icon name="person" size={40} color="#059669" />
+              <View 
+                className="w-20 h-20 rounded-full border-4 border-white shadow-lg items-center justify-center"
+                style={{ backgroundColor: 'rgba(0, 81, 135, 0.1)' }}
+              >
+                <Icon name="person" size={40} color="#005187" />
               </View>
             )}
             <Text className="text-2xl font-poppins-bold text-gray-900 mt-3 text-center leading-tight">
@@ -140,12 +230,21 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
             )}
           </View>
 
-          {/* Skills Tags */}
+          {/* Skills Tags - Actualizado con colores azules */}
           {skillTags.length > 0 && (
             <View className="flex-row flex-wrap mb-4">
               {skillTags.map((skill, index) => (
-                <View key={index} className="bg-green-100 rounded-full px-3 py-1 mr-2 mb-2">
-                  <Text className="text-xs font-poppins-semibold text-green-700">{skill}</Text>
+                <View 
+                  key={index} 
+                  className="rounded-full px-3 py-1 mr-2 mb-2"
+                  style={{ backgroundColor: 'rgba(0, 81, 135, 0.1)' }}
+                >
+                  <Text 
+                    className="text-xs font-poppins-semibold"
+                    style={{ color: '#005187' }}
+                  >
+                    {skill}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -209,9 +308,9 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
               <Icon name="close" size={24} color="#EF4444" />
             </Pressable>
 
-            {/* Contact/Favorite Button */}
+            {/* Favorite Button */}
             <Pressable
-              onPress={onFavorite}
+              onPress={handleFavoriteMatch}
               style={{
                 backgroundColor: '#F59E0B',
                 borderRadius: 30,
@@ -225,22 +324,22 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
               <Icon name="star" size={28} color="white" />
             </Pressable>
 
-            {/* Contact Button */}
+            {/* Contact Button - Actualizado con colores azules */}
             <Pressable
-              onPress={onContact}
+              onPress={handleContactMatch}
               style={{
                 backgroundColor: 'white',
                 borderRadius: 25,
                 padding: 12,
                 borderWidth: 2,
-                borderColor: '#DBEAFE',
+                borderColor: 'rgba(0, 81, 135, 0.3)',
                 elevation: 4,
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.1,
                 shadowRadius: 4,
               }}
             >
-              <Icon name="email" size={24} color="#3B82F6" />
+              <Icon name="email" size={24} color="#005187" />
             </Pressable>
           </View>
         </View>
