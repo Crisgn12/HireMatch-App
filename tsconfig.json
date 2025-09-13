@@ -2,10 +2,11 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "esModuleInterop": true,  // ← Agrega esto
-    "allowSyntheticDefaultImports": true,  // ← Agrega esto para compatibilidad
-    "skipLibCheck": true,
-    "types": [] // Excluye los tipos de Node.js
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    }
   },
   "include": [
     "**/*.ts",
