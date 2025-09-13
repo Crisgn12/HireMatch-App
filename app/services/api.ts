@@ -395,6 +395,15 @@ export const likeJobOffer = async (ofertaId: number) => {
   }
 }
 
+export const superLikeJobOffer = async (ofertaId: number) => {
+  try {
+    const response = await api.post(`/api/likes/swipe/superlike/${ofertaId}`);
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al dar superlike a la oferta: ' + (error as Error).message);
+  }
+};
+
 // Interfaz para la respuesta del endpoint
 interface MatchUsuarioResponse {
   postulacionId: number;

@@ -5,7 +5,7 @@ import Swiper from 'react-native-deck-swiper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import JobOfferCard from '../components/JobOfferCard';
-import { getJobOffers, likeJobOffer } from '../services/api';
+import { getJobOffers, likeJobOffer, superLikeJobOffer } from '../services/api';
 
 const { width, height } = Dimensions.get('window');
 
@@ -31,7 +31,7 @@ const Home = () => {
   const navigation = useNavigation();
   const swiperRef = useRef<Swiper<JobOffer>>(null);
   const [likes, setLikes] = useState(5);
-  const [superLikes, setSuperLikes] = useState(2);
+  const [superLikes, setSuperLikes] = useState(1);
   const [jobOffers, setJobOffers] = useState<JobOffer[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -182,6 +182,23 @@ const Home = () => {
     setCurrentIndex(index + 1);
   };
 
+  const handleSwipedTop = async (index: number) => {
+    const job = jobOffers[index];
+    if (!job) return;
+
+    try {
+      await superLikeJobOffer(job.id);
+      setSuperLikes(prev => Math.max(0, prev - 1));
+      setCurrentIndex(prev => prev + 1);
+    } catch (error) {
+      const errorMessage = (error as Error).message;
+      console.error('Error al dar super like:', errorMessage);
+      if (errorMessage.includes('Límite diario de superlikes')) {
+        //router.push('/store');
+      }
+    }
+  };
+
   // ✅ CORREGIDO: Usar el swiper ref para acciones manuales
   const handleLike = () => {
     if (likes > 0 && swiperRef.current && currentIndex < jobOffers.length) {
@@ -189,10 +206,9 @@ const Home = () => {
     }
   };
 
-  const handleSuperLike = () => {
+  const handleSuperLike = async () => {
     if (superLikes > 0 && swiperRef.current && currentIndex < jobOffers.length) {
-      setSuperLikes(prev => Math.max(0, prev - 1));
-      swiperRef.current.swipeRight(); // o crear una acción especial para super like
+      swiperRef.current.swipeTop();
     }
   };
 
@@ -332,6 +348,7 @@ const Home = () => {
             }}
             onSwipedRight={handleSwipedRight}
             onSwipedLeft={handleSwipedLeft}
+            onSwipedTop={handleSwipedTop}
             backgroundColor="#F8FAFC"
             stackSize={3}
             stackSeparation={15}
@@ -352,6 +369,13 @@ const Home = () => {
                 style: {
                   label: { backgroundColor: '#10B981', color: 'white', padding: 10 },
                   wrapper: { flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', marginTop: 30, marginLeft: 30 },
+                },
+              },
+              top: {
+                title: 'Super Like',
+                style: {
+                  label: { backgroundColor: '#F59E0B', color: 'white', padding: 10 },
+                  wrapper: { flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', marginTop: -30, marginLeft: 0 },
                 },
               },
             }}

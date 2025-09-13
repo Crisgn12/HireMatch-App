@@ -1,5 +1,4 @@
 // app/(tabs)/applications.tsx
-import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -161,27 +160,6 @@ const Applications = () => {
 
   return (
     <View className="flex-1 bg-gray-50">
-      {/* Header con filtro */}
-      <View className="bg-white p-4 shadow-sm border-b border-gray-200">
-        <Text className="text-xl font-poppins-semibold text-gray-800 mb-3">
-          Mis Postulaciones
-        </Text>
-        <View className="border border-gray-300 rounded-lg bg-white">
-          <Picker
-            selectedValue={selectedEstado}
-            onValueChange={handleEstadoChange}
-            style={{ fontFamily: 'Poppins-Regular', color: '#4B5563' }}
-          >
-            {ESTADOS_POSTULACION.map((estado) => (
-              <Picker.Item
-                key={estado.value}
-                label={estado.label}
-                value={estado.value}
-              />
-            ))}
-          </Picker>
-        </View>
-      </View>
 
       {/* Lista de postulaciones */}
       <ScrollView
