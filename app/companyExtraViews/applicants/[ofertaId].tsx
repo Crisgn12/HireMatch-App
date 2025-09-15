@@ -123,7 +123,22 @@ const ApplicantsView = () => {
   const handleSwipedLeft = (index: number) => {
     const applicant = applicants[index];
     if (!applicant) return;
-    
+    import('../../services/api').then(({ rejectUserProfile }) => {
+      rejectUserProfile(applicant.likeId)
+        .then(() => {
+          Alert.alert(
+            'Candidato descartado',
+            `${applicant.nombreCompleto} ha sido rechazado correctamente.`
+          );
+        })
+        .catch((error) => {
+          console.error('Error al rechazar candidato:', error);
+          Alert.alert(
+            'Error',
+            'No se pudo rechazar al candidato. Inténtalo de nuevo.'
+          );
+        });
+    });
     console.log('Candidato descartado:', applicant.email);
     setCurrentIndex(index + 1);
   };
