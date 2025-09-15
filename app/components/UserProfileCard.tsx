@@ -37,6 +37,7 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
   onReject, 
   onFavorite 
 }) => {
+
   const router = useRouter();
 
   // Función para extraer las primeras habilidades para mostrar como tags
@@ -84,7 +85,45 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
       console.error('Error in handleContactMatch:', error);
     }
   };
-
+  // Nueva función para rechazar candidato/perfil
+  const handleRejectProfile = async () => {
+    try {
+      Alert.alert(
+        'Rechazar Candidato',
+        `¿Deseas rechazar a ${user.nombreCompleto}? Esta acción no se puede deshacer.`,
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+          {
+            text: 'Rechazar',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                const { rejectUserProfile } = await import('../services/api');
+                await rejectUserProfile(user.likeId);
+                Alert.alert(
+                  'Candidato rechazado',
+                  `${user.nombreCompleto} ha sido rechazado correctamente.`,
+                  [{ text: 'OK', onPress: onReject }]
+                );
+              } catch (error) {
+                console.error('Error rejecting user profile:', error);
+                Alert.alert(
+                  'Error',
+                  'No se pudo rechazar al candidato. Inténtalo de nuevo.',
+                  [{ text: 'OK' }]
+                );
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error in handleRejectProfile:', error);
+    }
+  };
   // Nueva función para manejar favoritos
   const handleFavoriteMatch = async () => {
     try {
@@ -292,7 +331,7 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
           }}>
             {/* Reject Button */}
             <Pressable
-              onPress={onReject}
+              onPress={handleRejectProfile}
               style={{
                 backgroundColor: 'white',
                 borderRadius: 25,

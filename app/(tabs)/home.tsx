@@ -1,11 +1,11 @@
 import { useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Dimensions, Pressable, Text, View } from 'react-native';
-import { Swiper, type SwiperCardRefType } from 'rn-swiper-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Swiper, type SwiperCardRefType } from 'rn-swiper-list';
 import JobOfferCard from '../components/JobOfferCard';
-import { getJobOffers, likeJobOffer, superLikeJobOffer } from '../services/api';
+import { getJobOffers, likeJobOffer, superLikeJobOffer,rejectJobOffer } from '../services/api';
 
 const { width, height } = Dimensions.get('window');
 
@@ -173,12 +173,17 @@ const Home = () => {
     }
   };
 
-  const handleSwipedLeft = (index: number) => {
+  const handleSwipedLeft = async (index: number) => {
     const job = jobOffers[index];
     if (!job) return;
-    
-    console.log('Oferta descartada:', job.id);
-    setCurrentIndex(index + 1);
+    // Llamar al API para rechazar la oferta
+    try {
+      await rejectJobOffer(job.id);
+      console.log('Oferta descartada:', job.id);
+      setCurrentIndex(index + 1);
+    } catch (error) {
+      console.error('Error al rechazar la oferta:', error);
+    }
   };
 
   // ✅ VALIDAR SUPER LIKES ANTES DE PROCESAR EL SWIPE TOP
