@@ -395,6 +395,15 @@ export const likeJobOffer = async (ofertaId: number) => {
   }
 }
 
+export const rejectJobOffer = async (ofertaId: number) => {
+  try {
+    const response = await api.post(`/api/passes/oferta/${ofertaId}`);
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al rechazar la oferta: ' + (error as Error).message);
+  }
+}
+
 export const superLikeJobOffer = async (ofertaId: number) => {
   try {
     const response = await api.post(`/api/likes/swipe/superlike/${ofertaId}`);
@@ -575,4 +584,26 @@ export const getMatchesByOffer = async (ofertaId: number) => {
   }
 }
 
+  export const rejectUserProfile = async (likeId: number) => {
+  const token = await AsyncStorage.getItem('token');
+  if (!token) {
+    throw new Error('No hay token de autenticación');
+  }
+  try {
+    const response = await api.post(
+      `/api/passes/like/${likeId}`,
+      {},
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error rejecting user profile:', error);
+    throw error;
+  }
+};
 export default api;
