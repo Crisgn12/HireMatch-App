@@ -566,4 +566,13 @@ export const getLikesByOferta = async (ofertaId: number): Promise<LikeResponse[]
     }
   };
 
+export const getMatchesByOffer = async (ofertaId: number) => {
+  try {
+    const response = await api.get(`/api/matches/oferta/${ofertaId}`);
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al obtener los matches de la oferta: ' + (error as Error).message);
+  }
+}
+
 export default api;

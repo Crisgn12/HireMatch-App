@@ -240,6 +240,15 @@ const JobDetails = () => {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
+              onPress={() => router.push(`/companyExtraViews/applicants/${job.id}`)}
+              className="bg-yellow-400 rounded-full px-6 py-2 mt-4 flex-row items-center justify-center"
+            >
+              <Icon name="favorite" size={20} color="white" />
+              <Text className="text-white font-poppins-semibold text-base text-center ml-2">
+                Ver Matches
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={handleEdit}
               className="bg-blue-500 rounded-full px-6 py-2 mt-4 flex-row items-center justify-center"
             >
