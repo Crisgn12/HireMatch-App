@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { deleteJobOffer, getJobOfferDetails, getUserProfile } from '../services/api';
+import { deleteJobOffer, getJobOfferDetails, getMatchesByOffer, getUserProfile } from '../services/api';
 
 // Interfaz para los datos de una oferta laboral detallada
 interface JobOfferDetails {
@@ -52,6 +52,7 @@ const JobDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOwner, setIsOwner] = useState(false);
+  const [matchesLoading, setMatchesLoading] = useState(false);
 
   useEffect(() => {
     const fetchJobDetails = async () => {
@@ -165,6 +166,22 @@ const JobDetails = () => {
     );
   };
 
+  const handleViewMatches = async () => {
+    if (!job) return;
+    setMatchesLoading(true);
+    try {
+      const data = await getMatchesByOffer(job.id);
+      router.push({
+        pathname: '/companyExtraViews/matches',
+        params: { matches: JSON.stringify(data) },
+      });
+    } catch (err) {
+      Alert.alert('Error', 'No se pudieron cargar los matches');
+    } finally {
+      setMatchesLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView className="flex-1 justify-center items-center bg-gray-50">
@@ -240,13 +257,20 @@ const JobDetails = () => {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => router.push(`/companyExtraViews/applicants/${job.id}`)}
+              onPress={handleViewMatches}
               className="bg-yellow-400 rounded-full px-6 py-2 mt-4 flex-row items-center justify-center"
+              disabled={matchesLoading}
             >
-              <Icon name="favorite" size={20} color="white" />
-              <Text className="text-white font-poppins-semibold text-base text-center ml-2">
-                Ver Matches
-              </Text>
+              {matchesLoading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <>
+                  <Icon name="favorite" size={20} color="white" />
+                  <Text className="text-white font-poppins-semibold text-base text-center ml-2">
+                    Ver Matches
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleEdit}

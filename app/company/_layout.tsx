@@ -21,7 +21,7 @@ const CompanyLayout = () => {
           name="jobOffers"
           options={{
             title: 'Mis Ofertas',
-            tabBarLabel: 'Inicio',
+            tabBarLabel: 'Mis ofertas',
             tabBarIcon: ({ color, size }) => (
               <Icon name="cases" size={size} color={color} />
             ),

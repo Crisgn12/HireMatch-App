@@ -80,6 +80,14 @@ const JobOffersLayout = () => {
           ),
         }}
       />
+      <Stack.Screen
+        name="matches"
+        options={{
+          headerShown: true, 
+          headerTitle: 'Matches',
+          headerTitleAlign: 'center',
+        }}
+      />
     </Stack>
   );
 };
