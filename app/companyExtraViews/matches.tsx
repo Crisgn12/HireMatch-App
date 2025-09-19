@@ -1,6 +1,7 @@
-import { useLocalSearchParams } from 'expo-router';
+// screens/Matches.tsx
+import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { FlatList, Image, Text, View } from 'react-native';
+import { FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
 
 interface Match {
   postulacionId: number;
@@ -22,8 +23,22 @@ const Matches = () => {
   const { matches } = useLocalSearchParams<{ matches: string }>();
   const matchData: Match[] = matches ? JSON.parse(matches) : [];
 
+  const handleMatchPress = (match: Match) => {
+    router.push({
+      pathname: '../chat/individual',
+      params: {
+        ofertaId: match.ofertaId.toString(),
+        nombreContraparte: `${match.nombreUsuario} ${match.apellidoUsuario}`,
+        tituloOferta: match.tituloOferta
+      }
+    });
+  };
+
   const renderMatchItem = ({ item }: { item: Match }) => (
-    <View className="flex-row bg-white p-3 rounded-lg mb-3 shadow-md">
+    <TouchableOpacity 
+      onPress={() => handleMatchPress(item)}
+      className="flex-row bg-white p-3 rounded-lg mb-3 shadow-md"
+    >
       <Image
         source={{ uri: item.fotoUrl || 'https://via.placeholder.com/50' }}
         className="w-12 h-12 rounded-full mr-3"
@@ -39,8 +54,9 @@ const Matches = () => {
           Postulado: {new Date(item.fechaPostulacion).toLocaleDateString()}
         </Text>
         {item.superLike && <Text className="text-xs text-yellow-500 font-bold">Super Like!</Text>}
+        <Text className="text-xs text-blue-500 mt-1">Toca para chatear →</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (

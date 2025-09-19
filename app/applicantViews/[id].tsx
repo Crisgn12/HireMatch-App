@@ -151,6 +151,19 @@ const ApplicationDetails = () => {
     }
   };
 
+  const handleGoToChat = () => {
+    if (!jobDetails) return;
+    
+    router.push({
+      pathname: '../chat/individual',
+      params: {
+        ofertaId: jobDetails.id.toString(),
+        nombreContraparte: jobDetails.empresaNombre,
+        tituloOferta: jobDetails.titulo
+      }
+    });
+  };
+
   if (loading) {
     return (
       <SafeAreaView className="flex-1 justify-center items-center bg-gray-50">
@@ -331,11 +344,23 @@ const ApplicationDetails = () => {
           </View>
         </View>
 
-        {/* Botón de volver */}
+        {/* Botones de acción */}
         <View className="p-4 pb-8">
+          {/* Botón Ver Chat */}
+          <TouchableOpacity
+            onPress={handleGoToChat}
+            className="bg-primary rounded-full px-6 py-3 flex-row items-center justify-center mb-3"
+          >
+            <Icon name="chat" size={20} color="white" />
+            <Text className="text-white font-poppins-semibold text-base ml-2">
+              Ver Chat con {jobDetails.empresaNombre}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Botón de volver */}
           <TouchableOpacity
             onPress={() => router.back()}
-            className="bg-primary rounded-full px-6 py-3 flex-row items-center justify-center"
+            className="bg-gray-500 rounded-full px-6 py-3 flex-row items-center justify-center"
           >
             <Icon name="arrow-back" size={20} color="white" />
             <Text className="text-white font-poppins-semibold text-base ml-2">

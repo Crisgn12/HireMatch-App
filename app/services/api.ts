@@ -584,7 +584,7 @@ export const getMatchesByOffer = async (ofertaId: number) => {
   }
 }
 
-  export const rejectUserProfile = async (likeId: number) => {
+export const rejectUserProfile = async (likeId: number) => {
   const token = await AsyncStorage.getItem('token');
   if (!token) {
     throw new Error('No hay token de autenticación');
@@ -606,4 +606,63 @@ export const getMatchesByOffer = async (ofertaId: number) => {
     throw error;
   }
 };
+
+// services/api.ts - Agregar estas interfaces y funciones al archivo existente
+
+export interface ChatResponse {
+  id: number;
+  ofertaId: number;
+  tituloOferta: string;
+  nombreContraparte: string;
+  ultimoMensaje: string;
+  ultimaActividad: string;
+  noLeidos: number;
+}
+
+export interface MensajeResponse {
+  id: number;
+  chatId: number;
+  remitenteId: number;
+  contenido: string;
+  fechaEnvio: string;
+}
+
+export interface MensajesPorChatResponse {
+  chatId: number;
+  mensajes: MensajeResponse[];
+}
+
+export interface MensajeRequest {
+  ofertaId: number;
+  contenido: string;
+}
+
+// Funciones de Chat
+export const obtenerChats = async (): Promise<ChatResponse[]> => {
+  try {
+    const response = await api.get('/api/chat/chats');
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al obtener chats: ' + (error as Error).message);
+  }
+};
+
+export const obtenerMensajes = async (chatId: number): Promise<MensajesPorChatResponse> => {
+  try {
+    const response = await api.get(`/api/chat/mensajes/${chatId}`);
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al obtener mensajes: ' + (error as Error).message);
+  }
+};
+
+export const enviarMensaje = async (request: MensajeRequest): Promise<MensajeResponse> => {
+  try {
+    const response = await api.post('/api/chat/mensaje', request);
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al enviar mensaje: ' + (error as Error).message);
+  }
+};
+
 export default api;

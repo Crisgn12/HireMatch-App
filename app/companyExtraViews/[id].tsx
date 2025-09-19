@@ -172,7 +172,7 @@ const JobDetails = () => {
     try {
       const data = await getMatchesByOffer(job.id);
       router.push({
-        pathname: '/companyExtraViews/matches',
+        pathname: '../companyExtraViews/matches',
         params: { matches: JSON.stringify(data) },
       });
     } catch (err) {
