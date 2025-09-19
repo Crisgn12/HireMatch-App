@@ -248,7 +248,7 @@ const JobDetails = () => {
         {isOwner && (
           <View className="flex-col">
             <TouchableOpacity
-              onPress={() => router.push(`/companyExtraViews/applicants/${job.id}`)}
+              onPress={() => router.push(`../applicants/${job.id}`)}
               className="bg-green-500 rounded-full px-6 py-2 mt-4 flex-row items-center justify-center"
             >
               <Icon name="people" size={20} color="white" />

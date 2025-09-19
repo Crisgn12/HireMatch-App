@@ -4,8 +4,8 @@ import { ActivityIndicator, Alert, Dimensions, Pressable, Text, View } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Swiper, type SwiperCardRefType } from 'rn-swiper-list';
-import UserProfileCard from '../../components/UserProfileCard';
-import { createMatch, getLikesByOferta, getPerfilPublicoPorEmail, type LikeResponse, type PerfilPublicoResponse } from '../../services/api';
+import UserProfileCard from '../components/UserProfileCard';
+import { createMatch, getLikesByOferta, getPerfilPublicoPorEmail, type LikeResponse, type PerfilPublicoResponse } from '../services/api';
 
 const { width, height } = Dimensions.get('window');
 
@@ -123,7 +123,7 @@ const ApplicantsView = () => {
   const handleSwipedLeft = (index: number) => {
     const applicant = applicants[index];
     if (!applicant) return;
-    import('../../services/api').then(({ rejectUserProfile }) => {
+    import('../services/api').then(({ rejectUserProfile }) => {
       rejectUserProfile(applicant.likeId)
         .then(() => {
           Alert.alert(
@@ -339,35 +339,6 @@ const ApplicantsView = () => {
       backgroundColor: '#F8FAFC' 
     }}
       edges={['right', 'left', 'bottom']}>
-      
-      {/* Header */}
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        backgroundColor: 'white',
-        elevation: 4,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      }}>
-        <Pressable onPress={() => router.back()}>
-          <Icon name="arrow-back" size={24} color="#374151" />
-        </Pressable>
-        
-        <Text style={{
-          fontSize: 18,
-          fontWeight: 'bold',
-          color: '#374151',
-          fontFamily: 'Poppins-Bold'
-        }}>
-          Postulantes ({applicants.length})
-        </Text>
-        
-        <View style={{ width: 24 }} />
-      </View>
 
       {/* Main Card Area */}
       <View style={{ 
