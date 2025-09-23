@@ -35,6 +35,17 @@ export default function TabsLayout() {
           }}
         />
         
+          <Tabs.Screen
+          name="chats"
+          options={{
+            title: 'Mis Chats',
+            tabBarLabel: 'Chats',
+            tabBarIcon: ({ color, size }) => (
+              <Icon name="chat" size={size} color={color} />
+            ),
+          }}
+        />
+
         <Tabs.Screen
           name="profile"
           options={{

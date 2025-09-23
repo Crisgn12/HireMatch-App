@@ -1,7 +1,7 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { getUserProfile, updateUserProfile } from '../services/api';
@@ -409,7 +409,7 @@ const Profile = () => {
           </View>
           <TouchableOpacity
                           onPress={handleLogout}
-                          className="mt-4 bg-red-400 rounded-full px-6 py-2 mb-8"
+                          className="mt-4 bg-red-500 rounded-full px-6 py-2 mb-8"
                         >
                           <Text
                             style={{ fontFamily: 'Poppins-SemiBold' }}
