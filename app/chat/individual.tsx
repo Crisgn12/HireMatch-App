@@ -32,7 +32,14 @@ const ChatIndividual = () => {
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
+
     initializeChat();
+
+    // Configura el intervalo para actualizar cada 3 segundos
+    const intervalId = setInterval(initializeChat, 3000);
+
+    // Limpia el intervalo al desmontar el componente
+    return () => clearInterval(intervalId);
   }, []);
 
   const initializeChat = async () => {
