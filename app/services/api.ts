@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://192.168.100.101:8080';
+const API_BASE_URL = 'http://192.168.0.16:8080';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -662,6 +662,356 @@ export const enviarMensaje = async (request: MensajeRequest): Promise<MensajeRes
     return response.data;
   } catch (error) {
     throw new Error('Error al enviar mensaje: ' + (error as Error).message);
+  }
+};
+
+//Funciones estadísticas y Badges
+
+// Interfaces for DTOs
+export interface ProfileFormData {
+  nombre_empresa: string;
+  descripcion: string;
+  ubicacion: string;
+  telefono: string;
+  sitioWeb: string;
+  experiencia: string;
+  habilidades: string;
+  educacion: string;
+  certificaciones: string;
+  intereses: string;
+}
+
+export interface ActividadRecienteResponse {
+  tipo: string; // "MATCH", "LIKE", "SUPERLIKE", "BADGE_OBTENIDO"
+  descripcion: string;
+  fecha: string;
+  icono: string;
+  color: string;
+  tiempoTranscurrido: string;
+  datosAdicionales: any;
+}
+
+export interface BadgeConfigResponse {
+  id: number;
+  nombre: string;
+  descripcion: string;
+  icono: string;
+  color: string;
+  tipo: string;
+  condicionRequerida: number;
+  activo: boolean;
+  fechaCreacion: string;
+  totalUsuariosConBadge: number;
+  porcentajeUsuarios: number;
+  usuariosRecientes: UsuarioConBadgeResponse[];
+}
+
+export interface BadgeDistribucionResponse {
+  nombreBadge: string;
+  icono: string;
+  color: string;
+  cantidadUsuarios: number;
+  porcentajeUsuarios: number;
+  rareza: string; // "COMÚN", "RARO", "ÉPICO", "LEGENDARIO"
+}
+
+export interface BadgeObtenidoResponse {
+  nuevosBadges: BadgeResponse[];
+  mensaje: string;
+  mostrarNotificacion: boolean;
+  fechaObtenido: string;
+  puntosGanados: number;
+  subirNivel: boolean;
+  nivelAnterior: number;
+  nivelNuevo: number;
+  mensajesMotivacionales: string[];
+}
+
+export interface BadgeRequest {
+  nombre: string;
+  descripcion: string;
+  icono: string;
+  color: string;
+  tipo: string;
+  condicionRequerida: number;
+  activo: boolean;
+}
+
+export interface BadgeResponse {
+  id: number;
+  nombre: string;
+  descripcion: string;
+  icono: string;
+  color: string;
+  tipo: string;
+  tipoDisplay: string;
+  condicionRequerida: number;
+  fechaObtenido: string | null;
+  progresoActual: number;
+  activo: boolean;
+  obtenido: boolean;
+}
+
+export interface EstadisticasGlobalesResponse {
+  totalUsuarios: number;
+  totalMatches: number;
+  totalLikes: number;
+  totalSuperLikes: number;
+  promedioMatchesPorUsuario: number;
+  promedioLikesPorUsuario: number;
+  tasaExitoPromedio: number;
+  distribucionBadges: BadgeDistribucionResponse[];
+  topUsuariosPorBadges: RankingUsuarioResponse[];
+  topUsuariosPorMatches: RankingUsuarioResponse[];
+  usuariosActivosUltimos7Dias: number;
+  usuariosActivosUltimos30Dias: number;
+  perfilesCompletados: number;
+}
+
+export interface EstadisticaUsuarioResponse {
+  perfilId: number;
+  totalMatches: number;
+  totalLikesDados: number;
+  totalLikesRecibidos: number;
+  totalSuperlikesDados: number;
+  totalSuperlikesRecibidos: number;
+  totalRechazosDados: number;
+  totalRechazosRecibidos: number;
+  perfilCompletado: boolean;
+  porcentajePerfil: number;
+  diasActivo: number;
+  ultimaActividad: string;
+  fechaRegistro: string;
+  fechaActualizacion: string;
+  tasaExito: number;
+  popularidad: number;
+  tasaRespuesta: number;
+  totalBadges: number;
+  rendimientoVsPromedio: string;
+  posicionRanking: number;
+}
+
+export interface LogroDestacadoResponse {
+  titulo: string;
+  descripcion: string;
+  icono: string;
+  color: string;
+  valor: number;
+  categoria: string;
+  esReciente: boolean;
+}
+
+export interface NotificacionBadgeResponse {
+  id: number;
+  badge: BadgeResponse;
+  fechaObtenido: string;
+  leida: boolean;
+  mensaje: string;
+  tipo: string; // "BADGE_NUEVO", "PROGRESO", "NIVEL_SUBIDO"
+}
+
+export interface PerfilConEstadisticasResponse {
+  perfilId: number;
+  nombreCompleto: string;
+  email: string;
+  tipoPerfil: string;
+  nombreEmpresa: string;
+  descripcion: string;
+  ubicacion: string;
+  telefono: string;
+  sitioWeb: string;
+  experiencia: string;
+  habilidades: string;
+  educacion: string;
+  certificaciones: string;
+  intereses: string;
+  fotoUrl: string | null;
+  estadisticas: EstadisticaUsuarioResponse;
+  badges: UsuarioBadgeResponse[];
+  badgesRecientes: UsuarioBadgeResponse[];
+  badgesDisponibles: BadgeResponse[];
+  proximosBadges: ProgresoResponse[];
+  nivelUsuario: number;
+  titulo: string;
+  puntosExperiencia: number;
+  puntosParaProximoNivel: number;
+  progresoNivel: number;
+  ultimaConexion: string;
+  actividadReciente: ActividadRecienteResponse[];
+  logrosDestacados: LogroDestacadoResponse[];
+}
+
+export interface ProgresoResponse {
+  nombreBadge: string;
+  descripcion: string;
+  icono: string;
+  color: string;
+  progresoActual: number;
+  progresoRequerido: number;
+  porcentajeCompletado: number;
+}
+
+export interface RankingUsuarioResponse {
+  perfilId: number;
+  nombreCompleto: string;
+  fotoUrl: string | null;
+  posicion: number;
+  totalBadges: number;
+  nivelUsuario: number;
+  titulo: string;
+  puntuacion: number;
+  esUsuarioActual: boolean;
+}
+
+export interface UsuarioBadgeResponse {
+  id: number;
+  badge: BadgeResponse;
+  fechaObtenido: string;
+  progresoActual: number;
+  esNuevo: boolean;
+  notificado: boolean;
+  tiempoTranscurrido: string;
+}
+
+export interface UsuarioConBadgeResponse {
+  perfilId: number;
+  nombreCompleto: string;
+  email: string;
+  fotoUrl: string | null;
+  fechaObtenido: string;
+  tiempoTranscurrido: string;
+}
+
+export const obtenerBadgesUsuario = async (): Promise<UsuarioBadgeResponse[]> => {
+  const token = await AsyncStorage.getItem('token');
+  if (!token) {
+    throw new Error('No hay token de autenticación');
+  }
+  try {
+    const response = await api.get('/api/badges/usuario', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al obtener los badges del usuario: ' + (error as Error).message);
+  }
+};
+
+export const obtenerTodosBadges = async (): Promise<BadgeResponse[]> => {
+  const token = await AsyncStorage.getItem('token');
+  if (!token) {
+    throw new Error('No hay token de autenticación');
+  }
+  try {
+    const response = await api.get('/api/badges/todos', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al obtener todos los badges: ' + (error as Error).message);
+  }
+};
+
+export const obtenerProgresoBadges = async (): Promise<ProgresoResponse[]> => {
+  const token = await AsyncStorage.getItem('token');
+  if (!token) {
+    throw new Error('No hay token de autenticación');
+  }
+  try {
+    const response = await api.get('/api/badges/progreso', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al obtener el progreso de badges: ' + (error as Error).message);
+  }
+};
+
+export const verificarNuevosBadges = async (): Promise<BadgeObtenidoResponse> => {
+  const token = await AsyncStorage.getItem('token');
+  if (!token) {
+    throw new Error('No hay token de autenticación');
+  }
+  try {
+    const response = await api.post(
+      '/api/badges/verificar',
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al verificar nuevos badges: ' + (error as Error).message);
+  }
+};
+
+export const marcarBadgesNotificados = async (): Promise<void> => {
+  const token = await AsyncStorage.getItem('token');
+  if (!token) {
+    throw new Error('No hay token de autenticación');
+  }
+  try {
+    await api.post(
+      '/api/badges/marcar-notificados',
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+  } catch (error) {
+    throw new Error('Error al marcar badges como notificados: ' + (error as Error).message);
+  }
+};
+
+export const obtenerEstadisticasUsuario = async (): Promise<EstadisticaUsuarioResponse> => {
+  const token = await AsyncStorage.getItem('token');
+  if (!token) {
+    throw new Error('No hay token de autenticación');
+  }
+  try {
+    const response = await api.get('/api/badges/estadisticas', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al obtener estadísticas del usuario: ' + (error as Error).message);
+  }
+};
+
+export const obtenerPerfilConEstadisticas = async (): Promise<PerfilConEstadisticasResponse> => {
+  const token = await AsyncStorage.getItem('token');
+  if (!token) {
+    throw new Error('No hay token de autenticación');
+  }
+  try {
+    const response = await api.get('/api/badges/perfil-completo', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al obtener perfil con estadísticas: ' + (error as Error).message);
   }
 };
 
