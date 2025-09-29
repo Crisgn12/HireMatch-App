@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://192.168.0.16:8080';
+const API_BASE_URL = 'http://192.168.0.12:8080';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -810,22 +810,51 @@ export interface NotificacionBadgeResponse {
   tipo: string; // "BADGE_NUEVO", "PROGRESO", "NIVEL_SUBIDO"
 }
 
+export interface EstadisticasEmpresaResponse {
+  totalOfertas: number;
+  totalPostulaciones: number;
+  totalMatches: number;
+  totalSuperlikes: number;
+  totalRechazosEmpresa: number;
+  totalRechazosPostulante: number;
+  totalContactados: number;
+  totalVistas: number;
+  tasaAceptacion: number;
+  tasaRechazoEmpresa: number;
+  tasaRechazo: number;
+  tasaContacto: number;
+}
+
+export interface EstadisticasOfertaResponse {
+  vistasOferta: number;
+  totalPostulaciones: number;
+  totalMatches: number;
+  totalSuperlikes: number;
+  totalRechazosEmpresa: number;
+  totalRechazosPostulante: number;
+  totalContactados: number;
+  tasaAceptacion: number;
+  tasaRechazoEmpresa: number;
+  tasaRechazo: number;
+  tasaContacto: number;
+}
+
 export interface PerfilConEstadisticasResponse {
   perfilId: number;
   nombreCompleto: string;
   email: string;
   tipoPerfil: string;
-  nombreEmpresa: string;
-  descripcion: string;
-  ubicacion: string;
-  telefono: string;
-  sitioWeb: string;
-  experiencia: string;
-  habilidades: string;
-  educacion: string;
-  certificaciones: string;
-  intereses: string;
-  fotoUrl: string | null;
+  nombreEmpresa?: string;
+  descripcion?: string;
+  ubicacion?: string;
+  telefono?: string;
+  sitioWeb?: string;
+  experiencia?: string;
+  habilidades?: string;
+  educacion?: string;
+  certificaciones?: string;
+  intereses?: string;
+  fotoUrl?: string;
   estadisticas: EstadisticaUsuarioResponse;
   badges: UsuarioBadgeResponse[];
   badgesRecientes: UsuarioBadgeResponse[];
@@ -836,9 +865,10 @@ export interface PerfilConEstadisticasResponse {
   puntosExperiencia: number;
   puntosParaProximoNivel: number;
   progresoNivel: number;
-  ultimaConexion: string;
+  ultimaConexion?: string;
   actividadReciente: ActividadRecienteResponse[];
   logrosDestacados: LogroDestacadoResponse[];
+  estadisticasEmpresa?: EstadisticasEmpresaResponse;
 }
 
 export interface ProgresoResponse {
@@ -1012,6 +1042,42 @@ export const obtenerPerfilConEstadisticas = async (): Promise<PerfilConEstadisti
     return response.data;
   } catch (error) {
     throw new Error('Error al obtener perfil con estadísticas: ' + (error as Error).message);
+  }
+};
+
+// Interfaces para estadísticas de empresa
+export interface EstadisticasOfertaResponse {
+  ofertaId: number;
+  titulo: string;
+  descripcion: string;
+  totalPostulaciones: number;
+  totalMatches: number;
+  totalSuperlikes: number;
+  totalRechazosEmpresa: number;
+  totalRechazosPostulante: number;
+  totalContactados: number;
+  vistasOferta: number;
+  vacantesDisponibles: number;
+  estadoOferta: string;
+  nivelExperiencia: string;
+  tipoTrabajo: string;
+  tipoContrato: string;
+  diasActiva: number;
+  fechaCreacion: string;
+  fechaActualizacion: string;
+  tasaAceptacion: number;
+  tasaRechazoEmpresa: number;
+  tasaRechazo: number;
+  tasaContacto: number;
+}
+
+// Función para obtener estadísticas de una oferta
+export const obtenerEstadisticasOferta = async (ofertaId: number): Promise<EstadisticasOfertaResponse> => {
+  try {
+    const response = await api.get(`/ofertas/${ofertaId}/estadisticas`);
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al obtener estadísticas de la oferta: ' + (error as Error).message);
   }
 };
 

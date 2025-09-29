@@ -286,6 +286,15 @@ const JobDetails = () => {
               <Icon name="delete" size={20} color="white" />
               <Text className="text-white font-poppins-semibold text-base text-center ml-2">Eliminar Oferta</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push(`../offerStats/${job.id}`)}
+              className="bg-purple-500 rounded-full px-6 py-2 mt-4 flex-row items-center justify-center"
+            >
+                <Icon name="bar-chart" size={20} color="white" />
+                <Text className="text-white font-poppins-semibold text-base text-center ml-2">
+                  Ver Estadísticas
+                </Text>
+            </TouchableOpacity>
           </View>
         )}
 

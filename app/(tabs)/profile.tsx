@@ -1,14 +1,13 @@
-// screens/Profile.tsx
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Dimensions,
   FlatList,
   Image,
   Modal,
+  RefreshControl,
   ScrollView,
   Text,
   TextInput,
@@ -28,7 +27,7 @@ import {
   ProgresoResponse,
   updateUserProfile,
   UsuarioBadgeResponse,
-  verificarNuevosBadges
+  verificarNuevosBadges,
 } from '../services/api';
 
 const { width } = Dimensions.get('window');
@@ -69,20 +68,17 @@ const Profile = () => {
   const [progresoBadges, setProgresoBadges] = useState<ProgresoResponse[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [badgesModalVisible, setBadgesModalVisible] = useState(false);
   const [estadisticasModalVisible, setEstadisticasModalVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    fetchProfileData();
-  }, []);
-
   const fetchProfileData = async () => {
     setLoading(true);
+    setError('');
     try {
       const perfilConEstadisticas = await obtenerPerfilConEstadisticas();
-      // Ensure arrays are not null
       const normalizedPerfil = {
         ...perfilConEstadisticas,
         actividadReciente: perfilConEstadisticas.actividadReciente ?? [],
@@ -129,16 +125,27 @@ const Profile = () => {
         }
       }
     } catch (err) {
-      setError((err as Error).message || 'Error al cargar el perfil');
+      const errorMessage = (err as Error).message || 'Error al cargar el perfil';
+      setError(errorMessage);
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: (err as Error).message || 'Error al cargar el perfil',
+        text2: errorMessage,
       });
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
+
+  useEffect(() => {
+    fetchProfileData();
+  }, []);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchProfileData();
+  }, []);
 
   const handleInputChange = (field: keyof ProfileFormData, value: string) => {
     setModalFormData((prev) => ({ ...prev, [field]: value }));
@@ -328,7 +335,7 @@ const Profile = () => {
     </View>
   );
 
-  if (loading) {
+  if (loading && !refreshing) {
     return (
       <View className="flex-1 justify-center items-center bg-gray-50">
         <Icon name="autorenew" size={40} color="#3B82F6" />
@@ -341,13 +348,29 @@ const Profile = () => {
     return (
       <View className="flex-1 justify-center items-center bg-gray-50">
         <Text className="text-gray-700 text-lg font-poppins">Error al cargar datos</Text>
+        {error && (
+          <View className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
+            <Text className="text-red-700 font-poppins text-center">{error}</Text>
+            <TouchableOpacity
+              onPress={fetchProfileData}
+              className="mt-2 bg-red-600 rounded-full px-4 py-2"
+            >
+              <Text className="text-white font-poppins-semibold text-center">Reintentar</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     );
   }
 
   return (
     <>
-      <ScrollView className="flex-1 bg-gray-50">
+      <ScrollView
+        className="flex-1 bg-gray-50"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View className="mt-12 px-6">
           {/* Header Section */}
           <View className="bg-white rounded-2xl shadow-md p-6 mb-6">
@@ -752,14 +775,6 @@ const Profile = () => {
                       {perfilCompleto.estadisticas.totalLikesDados}
                     </Text>
                   </View>
-                  <View className="flex-row justify-between items-center mb-2">
-                    <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600">
-                      Likes Recibidos
-                    </Text>
-                    <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-gray-800">
-                      {perfilCompleto.estadisticas.totalLikesRecibidos}
-                    </Text>
-                  </View>
                   <View className="flex-row justify-between items-center">
                     <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600">
                       SuperLikes Dados
@@ -785,34 +800,10 @@ const Profile = () => {
                   </View>
                   <View className="flex-row justify-between items-center mb-2">
                     <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600">
-                      Popularidad
-                    </Text>
-                    <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-blue-600">
-                      {Math.round(perfilCompleto.estadisticas.popularidad * 100)}%
-                    </Text>
-                  </View>
-                  <View className="flex-row justify-between items-center mb-2">
-                    <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600">
                       Tasa de Respuesta
                     </Text>
                     <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-blue-600">
                       {Math.round(perfilCompleto.estadisticas.tasaRespuesta * 100)}%
-                    </Text>
-                  </View>
-                  <View className="flex-row justify-between items-center mb-2">
-                    <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600">
-                      Rendimiento vs Promedio
-                    </Text>
-                    <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-purple-600">
-                      {perfilCompleto.estadisticas.rendimientoVsPromedio}
-                    </Text>
-                  </View>
-                  <View className="flex-row justify-between items-center mb-2">
-                    <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600">
-                      Posición en Ranking
-                    </Text>
-                    <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-orange-600">
-                      {Math.round(perfilCompleto.estadisticas.posicionRanking)}%
                     </Text>
                   </View>
                   <View className="flex-row justify-between items-center">
