@@ -45,6 +45,16 @@ const ApplicantsLayout = () => {
           ),
         }}
       />
+
+      <Stack.Screen
+        name="dashboard"
+        options={{
+          headerTitle: 'Mi Dashboard',
+          headerBackground: () => (
+            <View className="flex-1 bg-white border-b border-gray-100" />
+          ),
+        }}
+      />
     </Stack>
   );
 };

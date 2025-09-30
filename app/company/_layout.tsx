@@ -48,6 +48,17 @@ const CompanyLayout = () => {
         />
 
         <Tabs.Screen
+          name="stats"
+          options={{
+            title: 'Mis Estadísticas',
+            tabBarLabel: 'Estadísticas',
+            tabBarIcon: ({ color, size }) => (
+              <Icon name="bar-chart" size={size} color={color} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
           name="profile"
           options={{
             title: 'Mi Perfil',

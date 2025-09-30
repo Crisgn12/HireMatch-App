@@ -1081,4 +1081,13 @@ export const obtenerEstadisticasOferta = async (ofertaId: number): Promise<Estad
   }
 };
 
+export const obtenerEstadisticasEmpresa = async () => {
+  try {
+    const response = await api.get('/api/perfiles/empresa/estadisticas');
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al obtener estadísticas de la empresa: ' + (error as Error).message);
+  }
+}
+
 export default api;

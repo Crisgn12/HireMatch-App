@@ -393,7 +393,7 @@ const Profile = () => {
               <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-lg text-gray-600">
                 {perfilCompleto.titulo}
               </Text>
-              <View className="flex-row mt-3 space-x-4">
+              <View className="flex-row mt-3 space-x-4 gap-1">
                 <View className={`px-4 py-1 rounded-full ${formData.tipo_perfil === 'postulante' ? 'bg-blue-100' : 'bg-green-100'}`}>
                   <Text
                     style={{ fontFamily: 'Poppins-SemiBold' }}
@@ -408,7 +408,7 @@ const Profile = () => {
                   </Text>
                 </View>
               </View>
-              <View className="flex-row mt-4 space-x-3">
+              <View className="flex-row mt-4 space-x-3 gap-1">
                 <TouchableOpacity onPress={() => setModalVisible(true)} className="bg-primary rounded-full px-6 py-2">
                   <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-white text-base">
                     Editar Perfil
@@ -429,9 +429,14 @@ const Profile = () => {
               <Text style={{ fontFamily: 'Poppins-SemiBold' }} className="text-lg text-gray-800">
                 Estadísticas
               </Text>
-              <TouchableOpacity onPress={() => setEstadisticasModalVisible(true)}>
-                <Icon name="bar-chart" size={24} color="#3B82F6" />
-              </TouchableOpacity>
+              <View className='flex-row justify-between w-24'>
+                <TouchableOpacity onPress={() => setEstadisticasModalVisible(true)}>
+                  <Icon name="info" size={24} color="#3B82F6" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.navigate('../applicants/dashboard')}>
+                  <Icon name="bar-chart" size={24} color="#3B82F6" />
+                </TouchableOpacity>
+              </View>
             </View>
             <View className="flex-row flex-wrap -mx-2">
               <View className="w-1/2 px-2 mb-4">
