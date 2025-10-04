@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://192.168.100.101:8080';
+const API_BASE_URL = 'http://192.168.0.14:8080';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -1089,5 +1089,57 @@ export const obtenerEstadisticasEmpresa = async () => {
     throw new Error('Error al obtener estadísticas de la empresa: ' + (error as Error).message);
   }
 }
+
+export interface OfertaResponse {
+  id: number;
+  titulo: string;
+  descripcion: string;
+  empresaNombre: string;
+  empresaId: number;
+  ubicacion: string;
+  tipoTrabajo: string;
+  tipoContrato: string;
+  tipoContratoDescripcion?: string;
+  nivelExperiencia: string;
+  salarioFormateado: string;
+  areaTrabajo: string;
+  salarioMinimo?: number;
+  salarioMaximo?: number;
+  moneda?: string;
+  aplicacionesRecibidas: number;
+  tiempoPublicacion: string;
+  aplicacionRapida?: boolean;
+  permiteAplicacionExterna?: boolean;
+}
+
+// Funciones de guardado de ofertas
+export const toggleGuardarOferta = async (ofertaId: number): Promise<OfertaResponse> => {
+  try {
+    const response = await api.post(`/ofertas/${ofertaId}/guardar`);
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al guardar/desguardar oferta: ' + (error as Error).message);
+  }
+};
+
+export const obtenerOfertasGuardadas = async (page: number = 0, size: number = 20) => {
+  try {
+    const response = await api.get('/ofertas/guardadas', {
+      params: { page, size }
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al obtener ofertas guardadas: ' + (error as Error).message);
+  }
+};
+
+export const verificarOfertaGuardada = async (ofertaId: number): Promise<boolean> => {
+  try {
+    const ofertas = await obtenerOfertasGuardadas();
+    return ofertas.content.some((oferta: any) => oferta.id === ofertaId);
+  } catch (error) {
+    return false;
+  }
+};
 
 export default api;

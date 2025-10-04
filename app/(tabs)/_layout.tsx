@@ -34,6 +34,17 @@ export default function TabsLayout() {
             ),
           }}
         />
+
+        <Tabs.Screen
+          name="saved"
+          options={{
+            title: 'Guardadas',
+            tabBarLabel: 'Guardadas',
+            tabBarIcon: ({ color, size }) => (
+            <Icon name="bookmark" size={size} color={color} />
+            ),
+          }}
+        />
         
           <Tabs.Screen
           name="chats"
